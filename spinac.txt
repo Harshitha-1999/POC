@@ -1,0 +1,1093 @@
+Requesting a Cloud Shell.Succeeded.
+Connecting terminal...
+
+Welcome to Azure Cloud Shell
+
+Type "az" to use Azure CLI
+Type "help" to learn about Cloud Shell
+
+krishna@Azure:~$ az aks get-credentials --resource-group RG1 --name AKSCLUSTER1
+Resource group 'RG1' could not be found.
+krishna@Azure:~$ az aks get-credentials --resource-group RSG1 --name AKSCLUSTER1
+Merged "AKSCLUSTER1" as current context in /home/krishna/.kube/config
+krishna@Azure:~$ vim spinacct.yaml
+krishna@Azure:~$
+krishna@Azure:~$ kubectl create -f spinacct.yaml
+serviceaccount/spinnaker-service-account created
+clusterrolebinding.rbac.authorization.k8s.io/spinnaker-role-binding created
+krishna@Azure:~$ kubectl -n kube-system create sa tiller
+serviceaccount/tiller created
+krishna@Azure:~$ kubectl create clusterrolebinding tiller --clusterrole cluster-admin --serviceaccount=kube-system:tiller
+clusterrolebinding.rbac.authorization.k8s.io/tiller created
+krishna@Azure:~$ kubectl create namespace spinnaker
+namespace/spinnaker created
+krishna@Azure:~$ vim spinsvcs.yaml
+krishna@Azure:~$ kubectl create -f spinsvcs.yaml
+service/spin-gate-np created
+service/spin-deck-np created
+krishna@Azure:~$ kubectl create deployment hal --image gcr.io/spinnaker-marketplace/halyard:1.5.0
+deployment.apps/hal created
+krishna@Azure:~$ kubectl edit deploy hal
+deployment.apps/hal edited
+krishna@Azure:~$ kubectl get pods
+NAME                         READY   STATUS        RESTARTS   AGE
+hal-587d7fc6ff-vj2kv         1/1     Terminating   0          5m20s
+hal-bd869b758-p2sll          1/1     Running       0          27s
+postgres-d78c74c58-g95xl     1/1     Running       0          5d22h
+sonarqube-6fb58d8cb5-vpkf2   1/1     Running       0          5d22h
+krishna@Azure:~$ kubectl exec -it hal-bd869b758-p2sll bash
+kubectl exec [POD] [COMMAND] is DEPRECATED and will be removed in a future version. Use kubectl exec [POD] -- [COMMAND] instead.
+bash-5.0$ /workdir# cd
+bash: /workdir#: No such file or directory
+bash-5.0$ exit
+exit
+command terminated with exit code 127
+krishna@Azure:~$ kubectl exec hal-bd869b758-p2sll bash
+kubectl exec [POD] [COMMAND] is DEPRECATED and will be removed in a future version. Use kubectl exec [POD] -- [COMMAND] instead.
+krishna@Azure:~$ kubectl exec hal-bd869b758-p2sll -- bash
+krishna@Azure:~$ kubectl exec -it hal-bd869b758-p2sll bash
+kubectl exec [POD] [COMMAND] is DEPRECATED and will be removed in a future version. Use kubectl exec [POD] -- [COMMAND] instead.
+bash-5.0$ ~#
+bash: ~#: command not found
+bash-5.0$ kubectl config set-cluster default --server=https://kubernetes.default --certificate-authority=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+Cluster "default" set.
+bash-5.0$ kubectl config set-context default --cluster=default
+Context "default" created.
+bash-5.0$ token=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+bash-5.0$ kubectl config set-credentials user --token=$token
+User "user" set.
+bash-5.0$ kubectl config set-context default --user=user
+Context "default" modified.
+bash-5.0$ kubectl config use-context default
+Switched to context "default".
+bash-5.0$ curl https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get > get_helm.sh
+bash: get_helm.sh: Permission denied
+bash-5.0$ curl https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get#!/usr/bin/env bash
+
+# Copyright The Helm Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The install script is based off of the MIT-licensed script from glide,
+# the package manager for Go: https://github.com/Masterminds/glide.sh/blob/master/get
+
+PROJECT_NAME="helm"
+TILLER_NAME="tiller"
+
+: ${USE_SUDO:="true"}
+: ${HELM_INSTALL_DIR:="/usr/local/bin"}
+
+# initArch discovers the architecture for this system.
+initArch() {
+  ARCH=$(uname -m)
+  case $ARCH in
+    armv5*) ARCH="armv5";;
+    armv6*) ARCH="armv6";;
+    armv7*) ARCH="arm";;
+    aarch64) ARCH="arm64";;
+    x86) ARCH="386";;
+    x86_64) ARCH="amd64";;
+    i686) ARCH="386";;
+    i386) ARCH="386";;
+  esac
+}
+
+# initOS discovers the operating system for this system.
+initOS() {
+  OS=$(echo `uname`|tr '[:upper:]' '[:lower:]')
+
+  case "$OS" in
+    # Minimalist GNU for Windows
+    mingw*) OS='windows';;
+  esac
+}
+
+# runs the given command as root (detects if we are root already)
+runAsRoot() {
+  if [ $EUID -ne 0 -a "$USE_SUDO" = "true" ]; then
+    sudo "${@}"
+  else
+    "${@}"
+  fi
+}
+
+# verifySupported checks that the os/arch combination is supported for
+# binary builds.
+verifySupported() {
+  local supported="darwin-amd64\nlinux-386\nlinux-amd64\nlinux-arm\nlinux-arm64\nlinux-ppc64le\nlinux-s390x\nwindows-amd64"
+  if ! echo "${supported}" | grep -q "${OS}-${ARCH}"; then
+    echo "No prebuilt binary for ${OS}-${ARCH}."
+    echo "To build from source, go to https://github.com/helm/helm"
+    exit 1
+  fi
+
+  if ! type "curl" > /dev/null && ! type "wget" > /dev/null; then
+    echo "Either curl or wget is required"
+    exit 1
+  fi
+}
+
+# checkDesiredVersion checks if the desired version is available.
+checkDesiredVersion() {
+  if [ "x$DESIRED_VERSION" == "x" ]; then
+    # Get tag from release URL
+    local release_url="https://github.com/helm/helm/releases"
+    if type "curl" > /dev/null; then
+
+      TAG=$(curl -Ls $release_url | grep 'href="/helm/helm/releases/tag/v2.[0-9]*.[0-9]*\"' | grep -v no-underline | head -n 1 | cut -d '"' -f 2 | awk '{n=split($NF,a,"/");print a[n]}' | awk 'a !~ $0{print}; {a=$0}')
+    elif type "wget" > /dev/null; then
+      TAG=$(wget $release_url -O - 2>&1 | grep 'href="/helm/helm/releases/tag/v2.[0-9]*.[0-9]*\"' | grep -v no-underline | head -n 1 | cut -d '"' -f 2 | awk '{n=split($NF,a,"/");print a[n]}' | awk 'a !~ $0{print}; {a=$0}')
+    fi
+  else
+    TAG=$DESIRED_VERSION
+  fi
+}
+
+# checkHelmInstalledVersion checks which version of helm is installed and
+# if it needs to be changed.
+checkHelmInstalledVersion() {
+  if [[ -f "${HELM_INSTALL_DIR}/${PROJECT_NAME}" ]]; then
+    local version=$("${HELM_INSTALL_DIR}/${PROJECT_NAME}" version -c | grep '^Client' | cut -d'"' -f2)
+    if [[ "$version" == "$TAG" ]]; then
+      echo "Helm ${version} is already ${DESIRED_VERSION:-latest}"
+      return 0
+    else
+      echo "Helm ${TAG} is available. Changing from version ${version}."
+      return 1
+    fi
+  else
+    return 1
+  fi
+}
+
+# downloadFile downloads the latest binary package and also the checksum
+# for that binary.
+downloadFile() {
+  HELM_DIST="helm-$TAG-$OS-$ARCH.tar.gz"
+  DOWNLOAD_URL="https://get.helm.sh/$HELM_DIST"
+  CHECKSUM_URL="$DOWNLOAD_URL.sha256"
+  HELM_TMP_ROOT="$(mktemp -dt helm-installer-XXXXXX)"
+  HELM_TMP_FILE="$HELM_TMP_ROOT/$HELM_DIST"
+  HELM_SUM_FILE="$HELM_TMP_ROOT/$HELM_DIST.sha256"
+  echo "Downloading $DOWNLOAD_URL"
+  if type "curl" > /dev/null; then
+    curl -SsL "$CHECKSUM_URL" -o "$HELM_SUM_FILE"
+  elif type "wget" > /dev/null; then
+    wget -q -O "$HELM_SUM_FILE" "$CHECKSUM_URL"
+  fi
+  if type "curl" > /dev/null; then
+    curl -SsL "$DOWNLOAD_URL" -o "$HELM_TMP_FILE"
+  elif type "wget" > /dev/null; then
+    wget -q -O "$HELM_TMP_FILE" "$DOWNLOAD_URL"
+  fi
+}
+
+# installFile verifies the SHA256 for the file, then unpacks and
+# installs it.
+installFile() {
+  HELM_TMP="$HELM_TMP_ROOT/$PROJECT_NAME"
+  local sum=$(openssl sha1 -sha256 ${HELM_TMP_FILE} | awk '{print $2}')
+  local expected_sum=$(cat ${HELM_SUM_FILE})
+  if [ "$sum" != "$expected_sum" ]; then
+    echo "SHA sum of ${HELM_TMP_FILE} does not match. Aborting."
+    exit 1
+  fi
+
+  mkdir -p "$HELM_TMP"
+  tar xf "$HELM_TMP_FILE" -C "$HELM_TMP"
+  HELM_TMP_BIN="$HELM_TMP/$OS-$ARCH/$PROJECT_NAME"
+  TILLER_TMP_BIN="$HELM_TMP/$OS-$ARCH/$TILLER_NAME"
+  echo "Preparing to install $PROJECT_NAME and $TILLER_NAME into ${HELM_INSTALL_DIR}"
+  runAsRoot cp "$HELM_TMP_BIN" "$HELM_INSTALL_DIR"
+  echo "$PROJECT_NAME installed into $HELM_INSTALL_DIR/$PROJECT_NAME"
+  if [ -x "$TILLER_TMP_BIN" ]; then
+    runAsRoot cp "$TILLER_TMP_BIN" "$HELM_INSTALL_DIR"
+    echo "$TILLER_NAME installed into $HELM_INSTALL_DIR/$TILLER_NAME"
+  else
+    echo "info: $TILLER_NAME binary was not found in this release; skipping $TILLER_NAME installation"
+  fi
+}
+
+# fail_trap is executed if an error occurs.
+fail_trap() {
+  result=$?
+  if [ "$result" != "0" ]; then
+    if [[ -n "$INPUT_ARGUMENTS" ]]; then
+      echo "Failed to install $PROJECT_NAME with the arguments provided: $INPUT_ARGUMENTS"
+      help
+    else
+      echo "Failed to install $PROJECT_NAME"
+    fi
+    echo -e "\tFor support, go to https://github.com/helm/helm."
+  fi
+  cleanup
+  exit $result
+}
+
+# testVersion tests the installed client to make sure it is working.
+testVersion() {
+  set +e
+  HELM="$(command -v $PROJECT_NAME)"
+  if [ "$?" = "1" ]; then
+    echo "$PROJECT_NAME not found. Is $HELM_INSTALL_DIR on your "'$PATH?'
+    exit 1
+  fi
+  set -e
+  echo "Run '$PROJECT_NAME init' to configure $PROJECT_NAME."
+}
+
+# help provides possible cli installation arguments
+help () {
+  echo "Accepted cli arguments are:"
+  echo -e "\t[--help|-h ] ->> prints this help"
+  echo -e "\t[--version|-v <desired_version>]"
+  echo -e "\te.g. --version v2.4.0  or -v latest"
+  echo -e "\t[--no-sudo]  ->> install without sudo"
+}
+
+# cleanup temporary files to avoid https://github.com/helm/helm/issues/2977
+cleanup() {
+  if [[ -d "${HELM_TMP_ROOT:-}" ]]; then
+    rm -rf "$HELM_TMP_ROOT"
+  fi
+}
+
+# Execution
+
+#Stop execution on any error
+trap "fail_trap" EXIT
+set -e
+
+# Parsing input arguments (if any)
+export INPUT_ARGUMENTS="${@}"
+set -u
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    '--version'|-v)
+       shift
+       if [[ $# -ne 0 ]]; then
+           export DESIRED_VERSION="${1}"
+       else
+           echo -e "Please provide the desired version. e.g. --version v2.4.0 or -v latest"
+           exit 0
+       fi
+       ;;
+    '--no-sudo')
+       USE_SUDO="false"
+       ;;
+    '--help'|-h)
+       help
+       exit 0
+       ;;
+    *) exit 1
+       ;;
+  esac
+  shift
+done
+set +u
+
+initArch
+initOS
+verifySupported
+checkDesiredVersion
+if ! checkHelmInstalledVersion; then
+  downloadFile
+  installFile
+fi
+testVersion
+cleanup
+bash-5.0$ curl https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get > get_helm.sh
+bash: get_helm.sh: Permission denied
+bash-5.0$ ~# curl https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get > get_helm.sh
+bash: get_helm.sh: Permission denied
+bash-5.0$ wget https://storage.googleapis.com/kubernetes-helm/helm-v2.7.2-darwin-amd64.tar.gz
+Connecting to storage.googleapis.com (142.250.81.208:443)
+wget: can't open 'helm-v2.7.2-darwin-amd64.tar.gz': Permission denied
+bash-5.0$ curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3
+curl: (23) Failed writing body (0 != 865)
+bash-5.0$ curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3
+curl: (23) Failed writing body (0 != 864)
+bash-5.0$ https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3
+bash: https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3: No such file or directory
+bash-5.0$ curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3
+#!/usr/bin/env bash
+
+# Copyright The Helm Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The install script is based off of the MIT-licensed script from glide,
+# the package manager for Go: https://github.com/Masterminds/glide.sh/blob/master/get
+
+: ${BINARY_NAME:="helm"}
+: ${USE_SUDO:="true"}
+: ${DEBUG:="false"}
+: ${VERIFY_CHECKSUM:="true"}
+: ${VERIFY_SIGNATURES:="false"}
+: ${HELM_INSTALL_DIR:="/usr/local/bin"}
+: ${GPG_PUBRING:="pubring.kbx"}
+
+HAS_CURL="$(type "curl" &> /dev/null && echo true || echo false)"
+HAS_WGET="$(type "wget" &> /dev/null && echo true || echo false)"
+HAS_OPENSSL="$(type "openssl" &> /dev/null && echo true || echo false)"
+HAS_GPG="$(type "gpg" &> /dev/null && echo true || echo false)"
+
+# initArch discovers the architecture for this system.
+initArch() {
+  ARCH=$(uname -m)
+  case $ARCH in
+    armv5*) ARCH="armv5";;
+    armv6*) ARCH="armv6";;
+    armv7*) ARCH="arm";;
+    aarch64) ARCH="arm64";;
+    x86) ARCH="386";;
+    x86_64) ARCH="amd64";;
+    i686) ARCH="386";;
+    i386) ARCH="386";;
+  esac
+}
+
+# initOS discovers the operating system for this system.
+initOS() {
+  OS=$(echo `uname`|tr '[:upper:]' '[:lower:]')
+
+  case "$OS" in
+    # Minimalist GNU for Windows
+    mingw*) OS='windows';;
+  esac
+}
+
+# runs the given command as root (detects if we are root already)
+runAsRoot() {
+  if [ $EUID -ne 0 -a "$USE_SUDO" = "true" ]; then
+    sudo "${@}"
+  else
+    "${@}"
+  fi
+}
+
+# verifySupported checks that the os/arch combination is supported for
+# binary builds, as well whether or not necessary tools are present.
+verifySupported() {
+  local supported="darwin-amd64\ndarwin-arm64\nlinux-386\nlinux-amd64\nlinux-arm\nlinux-arm64\nlinux-ppc64le\nlinux-s390x\nwindows-amd64"
+  if ! echo "${supported}" | grep -q "${OS}-${ARCH}"; then
+    echo "No prebuilt binary for ${OS}-${ARCH}."
+    echo "To build from source, go to https://github.com/helm/helm"
+    exit 1
+  fi
+
+  if [ "${HAS_CURL}" != "true" ] && [ "${HAS_WGET}" != "true" ]; then
+    echo "Either curl or wget is required"
+    exit 1
+  fi
+
+  if [ "${VERIFY_CHECKSUM}" == "true" ] && [ "${HAS_OPENSSL}" != "true" ]; then
+    echo "In order to verify checksum, openssl must first be installed."
+    echo "Please install openssl or set VERIFY_CHECKSUM=false in your environment."
+    exit 1
+  fi
+
+  if [ "${VERIFY_SIGNATURES}" == "true" ]; then
+    if [ "${HAS_GPG}" != "true" ]; then
+      echo "In order to verify signatures, gpg must first be installed."
+      echo "Please install gpg or set VERIFY_SIGNATURES=false in your environment."
+      exit 1
+    fi
+    if [ "${OS}" != "linux" ]; then
+      echo "Signature verification is currently only supported on Linux."
+      echo "Please set VERIFY_SIGNATURES=false or verify the signatures manually."
+      exit 1
+    fi
+  fi
+}
+
+# checkDesiredVersion checks if the desired version is available.
+checkDesiredVersion() {
+  if [ "x$DESIRED_VERSION" == "x" ]; then
+    # Get tag from release URL
+    local latest_release_url="https://github.com/helm/helm/releases"
+    if [ "${HAS_CURL}" == "true" ]; then
+      TAG=$(curl -Ls $latest_release_url | grep 'href="/helm/helm/releases/tag/v3.[0-9]*.[0-9]*\"' | grep -v no-underline | head -n 1 | cut -d '"' -f 2 | awk '{n=split($NF,a,"/");print a[n]}' | awk 'a !~ $0{print}; {a=$0}')
+    elif [ "${HAS_WGET}" == "true" ]; then
+      TAG=$(wget $latest_release_url -O - 2>&1 | grep 'href="/helm/helm/releases/tag/v3.[0-9]*.[0-9]*\"' | grep -v no-underline | head -n 1 | cut -d '"' -f 2 | awk '{n=split($NF,a,"/");print a[n]}' | awk 'a !~ $0{print}; {a=$0}')
+    fi
+  else
+    TAG=$DESIRED_VERSION
+  fi
+}
+
+# checkHelmInstalledVersion checks which version of helm is installed and
+# if it needs to be changed.
+checkHelmInstalledVersion() {
+  if [[ -f "${HELM_INSTALL_DIR}/${BINARY_NAME}" ]]; then
+    local version=$("${HELM_INSTALL_DIR}/${BINARY_NAME}" version --template="{{ .Version }}")
+    if [[ "$version" == "$TAG" ]]; then
+      echo "Helm ${version} is already ${DESIRED_VERSION:-latest}"
+      return 0
+    else
+      echo "Helm ${TAG} is available. Changing from version ${version}."
+      return 1
+    fi
+  else
+    return 1
+  fi
+}
+
+# downloadFile downloads the latest binary package and also the checksum
+# for that binary.
+downloadFile() {
+  HELM_DIST="helm-$TAG-$OS-$ARCH.tar.gz"
+  DOWNLOAD_URL="https://get.helm.sh/$HELM_DIST"
+  CHECKSUM_URL="$DOWNLOAD_URL.sha256"
+  HELM_TMP_ROOT="$(mktemp -dt helm-installer-XXXXXX)"
+  HELM_TMP_FILE="$HELM_TMP_ROOT/$HELM_DIST"
+  HELM_SUM_FILE="$HELM_TMP_ROOT/$HELM_DIST.sha256"
+  echo "Downloading $DOWNLOAD_URL"
+  if [ "${HAS_CURL}" == "true" ]; then
+    curl -SsL "$CHECKSUM_URL" -o "$HELM_SUM_FILE"
+    curl -SsL "$DOWNLOAD_URL" -o "$HELM_TMP_FILE"
+  elif [ "${HAS_WGET}" == "true" ]; then
+    wget -q -O "$HELM_SUM_FILE" "$CHECKSUM_URL"
+    wget -q -O "$HELM_TMP_FILE" "$DOWNLOAD_URL"
+  fi
+}
+
+# verifyFile verifies the SHA256 checksum of the binary package
+# and the GPG signatures for both the package and checksum file
+# (depending on settings in environment).
+verifyFile() {
+  if [ "${VERIFY_CHECKSUM}" == "true" ]; then
+    verifyChecksum
+  fi
+  if [ "${VERIFY_SIGNATURES}" == "true" ]; then
+    verifySignatures
+  fi
+}
+
+# installFile installs the Helm binary.
+installFile() {
+  HELM_TMP="$HELM_TMP_ROOT/$BINARY_NAME"
+  mkdir -p "$HELM_TMP"
+  tar xf "$HELM_TMP_FILE" -C "$HELM_TMP"
+  HELM_TMP_BIN="$HELM_TMP/$OS-$ARCH/helm"
+  echo "Preparing to install $BINARY_NAME into ${HELM_INSTALL_DIR}"
+  runAsRoot cp "$HELM_TMP_BIN" "$HELM_INSTALL_DIR/$BINARY_NAME"
+  echo "$BINARY_NAME installed into $HELM_INSTALL_DIR/$BINARY_NAME"
+}
+
+# verifyChecksum verifies the SHA256 checksum of the binary package.
+verifyChecksum() {
+  printf "Verifying checksum... "
+  local sum=$(openssl sha1 -sha256 ${HELM_TMP_FILE} | awk '{print $2}')
+  local expected_sum=$(cat ${HELM_SUM_FILE})
+  if [ "$sum" != "$expected_sum" ]; then
+    echo "SHA sum of ${HELM_TMP_FILE} does not match. Aborting."
+    exit 1
+  fi
+  echo "Done."
+}
+
+# verifySignatures obtains the latest KEYS file from GitHub main branch
+# as well as the signature .asc files from the specific GitHub release,
+# then verifies that the release artifacts were signed by a maintainer's key.
+verifySignatures() {
+  printf "Verifying signatures... "
+  local keys_filename="KEYS"
+  local github_keys_url="https://raw.githubusercontent.com/helm/helm/main/${keys_filename}"
+  if [ "${HAS_CURL}" == "true" ]; then
+    curl -SsL "${github_keys_url}" -o "${HELM_TMP_ROOT}/${keys_filename}"
+  elif [ "${HAS_WGET}" == "true" ]; then
+    wget -q -O "${HELM_TMP_ROOT}/${keys_filename}" "${github_keys_url}"
+  fi
+  local gpg_keyring="${HELM_TMP_ROOT}/keyring.gpg"
+  local gpg_homedir="${HELM_TMP_ROOT}/gnupg"
+  mkdir -p -m 0700 "${gpg_homedir}"
+  local gpg_stderr_device="/dev/null"
+  if [ "${DEBUG}" == "true" ]; then
+    gpg_stderr_device="/dev/stderr"
+  fi
+  gpg --batch --quiet --homedir="${gpg_homedir}" --import "${HELM_TMP_ROOT}/${keys_filename}" 2> "${gpg_stderr_device}"
+  gpg --batch --no-default-keyring --keyring "${gpg_homedir}/${GPG_PUBRING}" --export > "${gpg_keyring}"
+  local github_release_url="https://github.com/helm/helm/releases/download/${TAG}"
+  if [ "${HAS_CURL}" == "true" ]; then
+    curl -SsL "${github_release_url}/helm-${TAG}-${OS}-${ARCH}.tar.gz.sha256.asc" -o "${HELM_TMP_ROOT}/helm-${TAG}-${OS}-${ARCH}.tar.gz.sha256.asc"
+    curl -SsL "${github_release_url}/helm-${TAG}-${OS}-${ARCH}.tar.gz.asc" -o "${HELM_TMP_ROOT}/helm-${TAG}-${OS}-${ARCH}.tar.gz.asc"
+  elif [ "${HAS_WGET}" == "true" ]; then
+    wget -q -O "${HELM_TMP_ROOT}/helm-${TAG}-${OS}-${ARCH}.tar.gz.sha256.asc" "${github_release_url}/helm-${TAG}-${OS}-${ARCH}.tar.gz.sha256.asc"
+    wget -q -O "${HELM_TMP_ROOT}/helm-${TAG}-${OS}-${ARCH}.tar.gz.asc" "${github_release_url}/helm-${TAG}-${OS}-${ARCH}.tar.gz.asc"
+  fi
+  local error_text="If you think this might be a potential security issue,"
+  error_text="${error_text}\nplease see here: https://github.com/helm/community/blob/master/SECURITY.md"
+  local num_goodlines_sha=$(gpg --verify --keyring="${gpg_keyring}" --status-fd=1 "${HELM_TMP_ROOT}/helm-${TAG}-${OS}-${ARCH}.tar.gz.sha256.asc" 2> "${gpg_stderr_device}" | grep -c -E '^\[GNUPG:\] (GOODSIG|VALIDSIG)')
+  if [[ ${num_goodlines_sha} -lt 2 ]]; then
+    echo "Unable to verify the signature of helm-${TAG}-${OS}-${ARCH}.tar.gz.sha256!"
+    echo -e "${error_text}"
+    exit 1
+  fi
+  local num_goodlines_tar=$(gpg --verify --keyring="${gpg_keyring}" --status-fd=1 "${HELM_TMP_ROOT}/helm-${TAG}-${OS}-${ARCH}.tar.gz.asc" 2> "${gpg_stderr_device}" | grep -c -E '^\[GNUPG:\] (GOODSIG|VALIDSIG)')
+  if [[ ${num_goodlines_tar} -lt 2 ]]; then
+    echo "Unable to verify the signature of helm-${TAG}-${OS}-${ARCH}.tar.gz!"
+    echo -e "${error_text}"
+    exit 1
+  fi
+  echo "Done."
+}
+
+# fail_trap is executed if an error occurs.
+fail_trap() {
+  result=$?
+  if [ "$result" != "0" ]; then
+    if [[ -n "$INPUT_ARGUMENTS" ]]; then
+      echo "Failed to install $BINARY_NAME with the arguments provided: $INPUT_ARGUMENTS"
+      help
+    else
+      echo "Failed to install $BINARY_NAME"
+    fi
+    echo -e "\tFor support, go to https://github.com/helm/helm."
+  fi
+  cleanup
+  exit $result
+}
+
+# testVersion tests the installed client to make sure it is working.
+testVersion() {
+  set +e
+  HELM="$(command -v $BINARY_NAME)"
+  if [ "$?" = "1" ]; then
+    echo "$BINARY_NAME not found. Is $HELM_INSTALL_DIR on your "'$PATH?'
+    exit 1
+  fi
+  set -e
+}
+
+# help provides possible cli installation arguments
+help () {
+  echo "Accepted cli arguments are:"
+  echo -e "\t[--help|-h ] ->> prints this help"
+  echo -e "\t[--version|-v <desired_version>] . When not defined it fetches the latest release from GitHub"
+  echo -e "\te.g. --version v3.0.0 or -v canary"
+  echo -e "\t[--no-sudo]  ->> install without sudo"
+}
+
+# cleanup temporary files to avoid https://github.com/helm/helm/issues/2977
+cleanup() {
+  if [[ -d "${HELM_TMP_ROOT:-}" ]]; then
+    rm -rf "$HELM_TMP_ROOT"
+  fi
+}
+
+# Execution
+
+#Stop execution on any error
+trap "fail_trap" EXIT
+set -e
+
+# Set debug if desired
+if [ "${DEBUG}" == "true" ]; then
+  set -x
+fi
+
+# Parsing input arguments (if any)
+export INPUT_ARGUMENTS="${@}"
+set -u
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    '--version'|-v)
+       shift
+       if [[ $# -ne 0 ]]; then
+           export DESIRED_VERSION="${1}"
+       else
+           echo -e "Please provide the desired version. e.g. --version v3.0.0 or -v canary"
+           exit 0
+       fi
+       ;;
+    '--no-sudo')
+       USE_SUDO="false"
+       ;;
+    '--help'|-h)
+       help
+       exit 0
+       ;;
+    *) exit 1
+       ;;
+  esac
+  shift
+done
+set +u
+
+initArch
+initOS
+verifySupported
+checkDesiredVersion
+if ! checkHelmInstalledVersion; then
+  downloadFile
+  verifyFile
+  installFile
+fi
+testVersion
+cleanup
+bash-5.0$ curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100 11248  100 11248    0     0   119k      0 --:--:-- --:--:-- --:--:--  119k
+Downloading https://get.helm.sh/helm-v3.5.4-linux-amd64.tar.gz
+Verifying checksum... Done.
+Preparing to install helm into /usr/local/bin
+main: line 61: sudo: command not found
+Failed to install helm
+        For support, go to https://github.com/helm/helm.
+bash-5.0$ sudo curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
+bash: sudo: command not found
+bash-5.0$ curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100 11248  100 11248    0     0   119k      0 --:--:-- --:--:-- --:--:--  119k
+Downloading https://get.helm.sh/helm-v3.5.4-linux-amd64.tar.gz
+Verifying checksum... Done.
+Preparing to install helm into /usr/local/bin
+main: line 61: sudo: command not found
+Failed to install helm
+        For support, go to https://github.com/helm/helm.
+bash-5.0$ exit
+exit
+command terminated with exit code 127
+krishna@Azure:~$ sudo curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
+bash: sudo: command not found
+krishna@Azure:~$ curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100 11248  100 11248    0     0  73516      0 --:--:-- --:--:-- --:--:-- 73516
+Helm v3.5.4 is available. Changing from version v3.4.0.
+Downloading https://get.helm.sh/helm-v3.5.4-linux-amd64.tar.gz
+Verifying checksum... Done.
+Preparing to install helm into /usr/local/bin
+main: line 61: sudo: command not found
+Failed to install helm
+        For support, go to https://github.com/helm/helm.
+krishna@Azure:~$  kubectl exec hal-bd869b758-p2sll -- bash
+krishna@Azure:~$ curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100 11248  100 11248    0     0  19460      0 --:--:-- --:--:-- --:--:-- 19426
+Helm v3.5.4 is available. Changing from version v3.4.0.
+Downloading https://get.helm.sh/helm-v3.5.4-linux-amd64.tar.gz
+Verifying checksum... Done.
+Preparing to install helm into /usr/local/bin
+main: line 61: sudo: command not found
+Failed to install helm
+        For support, go to https://github.com/helm/helm.
+krishna@Azure:~$ sudo curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
+bash: sudo: command not found
+krishna@Azure:~$ apt install sudo
+E: Could not open lock file /var/lib/dpkg/lock-frontend - open (13: Permission denied)
+E: Unable to acquire the dpkg frontend lock (/var/lib/dpkg/lock-frontend), are you root?
+krishna@Azure:~$ sudo - i curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
+bash: sudo: command not found
+krishna@Azure:~$ sudo -i curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
+bash: sudo: command not found
+krishna@Azure:~$ pkg install helm
+bash: pkg: command not found
+krishna@Azure:~$ curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3
+krishna@Azure:~$ chmod 700 get_helm.sh
+krishna@Azure:~$ ./get_helm.sh
+Helm v3.5.4 is available. Changing from version v3.4.0.
+Downloading https://get.helm.sh/helm-v3.5.4-linux-amd64.tar.gz
+Verifying checksum... Done.
+Preparing to install helm into /usr/local/bin
+./get_helm.sh: line 61: sudo: command not found
+Failed to install helm
+ For support, go to https://github.com/helm/helm.
+krishna@Azure:~$ sed -i 's/\/usr\/local\/bin/\/home\/spinnaker/g' get_helm.sh
+krishna@Azure:~$ sed -i 's/sudo //g' get_helm.sh
+krishna@Azure:~$ export PATH=/home/spinnaker:$PATH
+krishna@Azure:~$  chmod 700 get_helm.sh
+krishna@Azure:~$ ./get_helm.sh
+Downloading https://get.helm.sh/helm-v3.5.4-linux-amd64.tar.gz
+Verifying checksum... Done.
+Preparing to install helm into /home/spinnaker
+cp: cannot create regular file '/home/spinnaker/helm': No such file or directory
+Failed to install helm
+        For support, go to https://github.com/helm/helm.
+krishna@Azure:~$ ~# ./get_helm.sh
+bash: ~#: command not found
+krishna@Azure:~$ cd /tmp
+krishna@Azure:/tmp$ curl https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get > install-helm.sh
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100  7163  100  7163    0     0  15777      0 --:--:-- --:--:-- --:--:-- 15777
+krishna@Azure:/tmp$ ./get_helm.sh
+bash: ./get_helm.sh: No such file or directory
+krishna@Azure:/tmp$ ./install-helm.sh
+bash: ./install-helm.sh: Permission denied
+krishna@Azure:/tmp$ exit
+exit
+
+
+
+---------------------------------------------------------------
+
+Requesting a Cloud Shell.Succeeded.
+Connecting terminal...
+
+Welcome to Azure Cloud Shell
+
+Type "az" to use Azure CLI
+Type "help" to learn about Cloud Shell
+
+krishna@Azure:~$ az aks get-credentials --resource-group RSG1 --name AKSCLUSTER1
+Merged "AKSCLUSTER1" as current context in /home/krishna/.kube/config
+krishna@Azure:~$ kubectl get pods
+NAME                         READY   STATUS    RESTARTS   AGE
+hal-bd869b758-p2sll          1/1     Running   0          64m
+postgres-d78c74c58-g95xl     1/1     Running   0          5d23h
+sonarqube-6fb58d8cb5-vpkf2   1/1     Running   0          5d23h
+krishna@Azure:~$ cd hal-bd869b758-p2sll
+bash: cd: hal-bd869b758-p2sll: No such file or directory
+krishna@Azure:~$ cd spinnaker
+bash: cd: spinnaker: No such file or directory
+krishna@Azure:~$ kubectl exec -it hal-bd869b758-p2sll bash
+kubectl exec [POD] [COMMAND] is DEPRECATED and will be removed in a future version. Use kubectl exec [POD] -- [COMMAND] instead.
+bash-5.0$ /workdir# cd
+bash: /workdir#: No such file or directory
+bash-5.0$ kubectl get ns
+NAME              STATUS   AGE
+default           Active   6d3h
+jenkins           Active   6d3h
+kube-node-lease   Active   6d3h
+kube-public       Active   6d3h
+kube-system       Active   6d3h
+spinnaker         Active   77m
+bash-5.0$ cd workdir#
+bash: cd: workdir#: No such file or directory
+bash-5.0$ cd /workdir
+bash: cd: /workdir: No such file or directory
+bash-5.0$ curl https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get > get_helm.sh
+bash: get_helm.sh: Permission denied
+bash-5.0$ curl https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get > install-helm.sh
+bash: install-helm.sh: Permission denied
+bash-5.0$ sed -i 's/\/usr\/local\/bin/\/home\/spinnaker/g' get_helm.sh
+sed: get_helm.sh: No such file or directory
+bash-5.0$ cd /tmp
+bash-5.0$ exit
+exit
+krishna@Azure:~$ cd /tmp
+krishna@Azure:/tmp$ curl https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get > install-helm.sh
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100  7163  100  7163    0     0  14212      0 --:--:-- --:--:-- --:--:-- 14184
+krishna@Azure:/tmp$ chmod u+x install-helm.sh
+krishna@Azure:/tmp$ ./install-helm.sh
+Helm  is already latest
+Run 'helm init' to configure helm.
+krishna@Azure:/tmp$ helm init --service-account tiller
+Error: unknown command "init" for "helm"
+
+Did you mean this?
+        lint
+
+Run 'helm --help' for usage.
+krishna@Azure:/tmp$ helm init
+Error: unknown command "init" for "helm"
+
+Did you mean this?
+        lint
+
+Run 'helm --help' for usage.
+krishna@Azure:/tmp$ helm init --service-account tiller --upgrade
+Error: unknown command "init" for "helm"
+
+Did you mean this?
+        lint
+
+Run 'helm --help' for usage.
+krishna@Azure:/tmp$ helm --help
+The Kubernetes package manager
+
+Common actions for Helm:
+
+- helm search:    search for charts
+- helm pull:      download a chart to your local directory to view
+- helm install:   upload the chart to Kubernetes
+- helm list:      list releases of charts
+
+Environment variables:
+
+| Name                               | Description                                                                       |
+|------------------------------------|-----------------------------------------------------------------------------------|
+| $HELM_CACHE_HOME                   | set an alternative location for storing cached files.                             |
+| $HELM_CONFIG_HOME                  | set an alternative location for storing Helm configuration.                       |
+| $HELM_DATA_HOME                    | set an alternative location for storing Helm data.                                |
+| $HELM_DEBUG                        | indicate whether or not Helm is running in Debug mode                             |
+| $HELM_DRIVER                       | set the backend storage driver. Values are: configmap, secret, memory, postgres   |
+| $HELM_DRIVER_SQL_CONNECTION_STRING | set the connection string the SQL storage driver should use.                      |
+| $HELM_MAX_HISTORY                  | set the maximum number of helm release history.                                   |
+| $HELM_NAMESPACE                    | set the namespace used for the helm operations.                                   |
+| $HELM_NO_PLUGINS                   | disable plugins. Set HELM_NO_PLUGINS=1 to disable plugins.                        |
+| $HELM_PLUGINS                      | set the path to the plugins directory                                             |
+| $HELM_REGISTRY_CONFIG              | set the path to the registry config file.                                         |
+| $HELM_REPOSITORY_CACHE             | set the path to the repository cache directory                                    |
+| $HELM_REPOSITORY_CONFIG            | set the path to the repositories file.                                            |
+| $KUBECONFIG                        | set an alternative Kubernetes configuration file (default "~/.kube/config")       |
+| $HELM_KUBEAPISERVER                | set the Kubernetes API Server Endpoint for authentication                         |
+| $HELM_KUBEASGROUPS                 | set the Username to impersonate for the operation.                                |
+| $HELM_KUBEASUSER                   | set the Groups to use for impoersonation using a comma-separated list.            |
+| $HELM_KUBECONTEXT                  | set the name of the kubeconfig context.                                           |
+| $HELM_KUBETOKEN                    | set the Bearer KubeToken used for authentication.                                 |
+
+Helm stores cache, configuration, and data based on the following configuration order:
+
+- If a HELM_*_HOME environment variable is set, it will be used
+- Otherwise, on systems supporting the XDG base directory specification, the XDG variables will be used
+- When no other location is set a default location will be used based on the operating system
+
+By default, the default directories depend on the Operating System. The defaults are listed below:
+
+| Operating System | Cache Path                | Configuration Path             | Data Path               |
+|------------------|---------------------------|--------------------------------|-------------------------|
+| Linux            | $HOME/.cache/helm         | $HOME/.config/helm             | $HOME/.local/share/helm |
+| macOS            | $HOME/Library/Caches/helm | $HOME/Library/Preferences/helm | $HOME/Library/helm      |
+| Windows          | %TEMP%\helm               | %APPDATA%\helm                 | %APPDATA%\helm          |
+
+Usage:
+  helm [command]
+
+Available Commands:
+  completion  generate autocompletions script for the specified shell
+  create      create a new chart with the given name
+  dependency  manage a chart's dependencies
+  env         helm client environment information
+  get         download extended information of a named release
+  help        Help about any command
+  history     fetch release history
+  install     install a chart
+  lint        examine a chart for possible issues
+  list        list releases
+  package     package a chart directory into a chart archive
+  plugin      install, list, or uninstall Helm plugins
+  pull        download a chart from a repository and (optionally) unpack it in local directory
+  repo        add, list, remove, update, and index chart repositories
+  rollback    roll back a release to a previous revision
+  search      search for a keyword in charts
+  show        show information of a chart
+  status      display the status of the named release
+  template    locally render templates
+  test        run tests for a release
+  uninstall   uninstall a release
+  upgrade     upgrade a release
+  verify      verify that a chart at the given path has been signed and is valid
+  version     print the client version information
+
+Flags:
+      --debug                       enable verbose output
+  -h, --help                        help for helm
+      --kube-apiserver string       the address and the port for the Kubernetes API server
+      --kube-as-group stringArray   Group to impersonate for the operation, this flag can be repeated to specify multiple groups.
+      --kube-as-user string         Username to impersonate for the operation
+      --kube-context string         name of the kubeconfig context to use
+      --kube-token string           bearer token used for authentication
+      --kubeconfig string           path to the kubeconfig file
+  -n, --namespace string            namespace scope for this request
+      --registry-config string      path to the registry config file (default "/home/krishna/.config/helm/registry.json")
+      --repository-cache string     path to the file containing cached repository indexes (default "/home/krishna/.cache/helm/repository")
+      --repository-config string    path to the file containing repository names and URLs (default "/home/krishna/.config/helm/repositories.yaml")
+
+Use "helm [command] --help" for more information about a command.
+krishna@Azure:/tmp$ helm lint --service-account tiller --upgrade
+Error: unknown flag: --service-account
+krishna@Azure:/tmp$ kubectl get svc
+NAME         TYPE           CLUSTER-IP     EXTERNAL-IP      PORT(S)          AGE
+kubernetes   ClusterIP      10.0.0.1       <none>           443/TCP          6d4h
+postgres     NodePort       10.0.172.225   <none>           5432:31445/TCP   5d23h
+sonarqube    LoadBalancer   10.0.216.188   52.224.192.176   80:32051/TCP     5d23h
+krishna@Azure:/tmp$ cd/
+bash: cd/: No such file or directory
+krishna@Azure:/tmp$ cd \
+>
+krishna@Azure:~$ helm init --service-account tiller --upgrade
+Error: unknown command "init" for "helm"
+
+Did you mean this?
+        lint
+
+Run 'helm --help' for usage.
+krishna@Azure:~$ helm install stable/kubernetes-dashboard --name dashboard-demo
+Error: unknown flag: --name
+krishna@Azure:~$ kubectl -n kube-system create serviceaccount tiller
+error: failed to create serviceaccount: serviceaccounts "tiller" already exists
+krishna@Azure:~$ kubectl create clusterrolebinding tiller --clusterrole cluster-admin --serviceaccount=kube-system:tiller
+error: failed to create clusterrolebinding: clusterrolebindings.rbac.authorization.k8s.io "tiller" already exists
+krishna@Azure:~$ helm init --service-account tiller
+Error: unknown command "init" for "helm"
+
+Did you mean this?
+        lint
+
+Run 'helm --help' for usage.
+krishna@Azure:~$ helm install stable/kubernetes-dashboard dashboard-demo
+Error: failed to download "dashboard-demo" (hint: running `helm repo update` may help)
+krishna@Azure:~$ helm repo update
+Error: no repositories found. You must add one before updating
+krishna@Azure:~$ helm init
+Error: unknown command "init" for "helm"
+
+Did you mean this?
+        lint
+
+Run 'helm --help' for usage.
+krishna@Azure:~$ kubectl get svc
+NAME         TYPE           CLUSTER-IP     EXTERNAL-IP      PORT(S)          AGE
+kubernetes   ClusterIP      10.0.0.1       <none>           443/TCP          6d4h
+postgres     NodePort       10.0.172.225   <none>           5432:31445/TCP   6d
+sonarqube    LoadBalancer   10.0.216.188   52.224.192.176   80:32051/TCP     5d23h
+krishna@Azure:~$ vim spinsvcs.yaml
+krishna@Azure:~$ kubectl apply -f spinsvcs.yaml
+Warning: resource services/spin-gate-np is missing the kubectl.kubernetes.io/last-applied-configuration annotation which is required by kubectl apply. kubectl apply should only be used on resources created declaratively by either kubectl create --save-config or kubectl apply. The missing annotation will be patched automatically.
+service/spin-gate-np configured
+Warning: resource services/spin-deck-np is missing the kubectl.kubernetes.io/last-applied-configuration annotation which is required by kubectl apply. kubectl apply should only be used on resources created declaratively by either kubectl create --save-config or kubectl apply. The missing annotation will be patched automatically.
+service/spin-deck-np configured
+krishna@Azure:~$ kubectl get svc
+NAME         TYPE           CLUSTER-IP     EXTERNAL-IP      PORT(S)          AGE
+kubernetes   ClusterIP      10.0.0.1       <none>           443/TCP          6d4h
+postgres     NodePort       10.0.172.225   <none>           5432:31445/TCP   6d
+sonarqube    LoadBalancer   10.0.216.188   52.224.192.176   80:32051/TCP     5d23h
+krishna@Azure:~$ ADDRESS=index.docker.io
+krishna@Azure:~$ REPOSITORIES=library/nginx
+krishna@Azure:~$ hal config provider docker-registry enable
+bash: hal: command not found
+krishna@Azure:~$ cd /
+krishna@Azure:/$
+krishna@Azure:/$ cd ~
+krishna@Azure:~$ cd \
+>
+krishna@Azure:~$ cd /tmp
+krishna@Azure:/tmp$ hal config provider docker-registry enable
+bash: hal: command not found
+krishna@Azure:/tmp$ kubectl create deployment hal --image gcr.io/spinnaker-marketplace/halyard:1.5.0
+error: failed to create deployment: deployments.apps "hal" already exists
+krishna@Azure:/tmp$ hal config provider docker-registry enable
+bash: hal: command not found
+krishna@Azure:/tmp$ kubectl get pods
+NAME                         READY   STATUS    RESTARTS   AGE
+hal-bd869b758-p2sll          1/1     Running   0          121m
+postgres-d78c74c58-g95xl     1/1     Running   0          6d
+sonarqube-6fb58d8cb5-vpkf2   1/1     Running   0          6d
+krishna@Azure:/tmp$ hal
+bash: hal: command not found
+krishna@Azure:/tmp$ cd ~#
+bash: cd: ~#: No such file or directory
+krishna@Azure:/tmp$ cd \
+>
+krishna@Azure:~$ helm repo add mirantisworkloads https://mirantisworkloads.storage.googleapis.com
+"mirantisworkloads" has been added to your repositories
+krishna@Azure:~$ helm install mirantisworkloads/minio
+Error: must either provide a name or specify --generate-name
+krishna@Azure:~$ helm install stable/kubernetes-dashboard dashboard-demo
+Error: failed to download "dashboard-demo" (hint: running `helm repo update` may help)
+krishna@Azure:~$ helm repo update
+Hang tight while we grab the latest from your chart repositories...
+...Successfully got an update from the "mirantisworkloads" chart repository
+Update Complete. ⎈Happy Helming!⎈
+krishna@Azure:~$ helm install mirantisworkloads/minio
+Error: must either provide a name or specify --generate-name
+krishna@Azure:~$ helm install mirantisworkloads/minio --name Harshi
+Error: unknown flag: --name
+krishna@Azure:~$ helm install mirantisworkloads/minio --generate-name Harshi
+Error: cannot set --generate-name and also specify a name
+krishna@Azure:~$ helm install mirantisworkloads/minio --generate-name
+Error: unable to build kubernetes objects from release manifest: unable to recognize "": no matches for kind "StatefulSet" in version "apps/v1beta1"
+krishna@Azure:~$ helm install stable/kubernetes-dashboard --name dashboard-demo
+Error: unknown flag: --name
+krishna@Azure:~$ helm install stable/kubernetes-dashboard --generate-name dashboard-demo
+Error: cannot set --generate-name and also specify a name
+krishna@Azure:~$ helm install stable/kubernetes-dashboard -name dashboard-demo
+Error: failed to download "dashboard-demo" (hint: running `helm repo update` may help)
+krishna@Azure:~$ helm repo update
+Hang tight while we grab the latest from your chart repositories...
+...Successfully got an update from the "mirantisworkloads" chart repository
+Update Complete. ⎈Happy Helming!⎈
+krishna@Azure:~$ helm install stable/kubernetes-dashboard -name dashboard-demo
+Error: failed to download "dashboard-demo" (hint: running `helm repo update` may help)
+krishna@Azure:~$ kubectl get pods
+NAME                         READY   STATUS    RESTARTS   AGE
+hal-bd869b758-p2sll          1/1     Running   0          156m
+postgres-d78c74c58-g95xl     1/1     Running   0          6d
+sonarqube-6fb58d8cb5-vpkf2   1/1     Running   0          6d
+krishna@Azure:~$ kubectl exec -it hal-bd869b758-p2sll -n spinnaker bash
+kubectl exec [POD] [COMMAND] is DEPRECATED and will be removed in a future version. Use kubectl exec [POD] -- [COMMAND] instead.
+Error from server (NotFound): pods "hal-bd869b758-p2sll" not found
+krishna@Azure:~$ kubectl get ns
+NAME              STATUS   AGE
+default           Active   6d5h
+jenkins           Active   6d4h
+kube-node-lease   Active   6d5h
+kube-public       Active   6d5h
+kube-system       Active   6d5h
+spinnaker         Active   166m
+krishna@Azure:~$ kubectl get -n spinnaker
+You must specify the type of resource to get. Use "kubectl api-resources" for a complete list of supported resources.
+
+error: Required resource not specified.
+Use "kubectl explain <resource>" for a detailed description of that resource (e.g. kubectl explain pods).
+See 'kubectl get -h' for help and examples
+krishna@Azure:~$ kubectl get pods --all-namespaces
+NAMESPACE     NAME                                  READY   STATUS    RESTARTS   AGE
+default       hal-bd869b758-p2sll                   1/1     Running   0          161m
+default       postgres-d78c74c58-g95xl              1/1     Running   0          6d
+default       sonarqube-6fb58d8cb5-vpkf2            1/1     Running   0          6d
+jenkins       jenkins-784f598f48-jk29l              1/1     Running   0          6d4h
+kube-system   coredns-748cdb7bf4-cb2h7              1/1     Running   0          6d5h
+kube-system   coredns-748cdb7bf4-g5w7n              1/1     Running   0          6d4h
+kube-system   coredns-autoscaler-868b684fd4-fssfj   1/1     Running   0          6d4h
+kube-system   kube-proxy-5frbf                      1/1     Running   0          5d15h
+kube-system   metrics-server-58fdc875d5-7bvbq       1/1     Running   0          6d4h
+kube-system   omsagent-4nbvn                        1/1     Running   0          6d5h
+kube-system   omsagent-rs-6db78c59b-98pm6           1/1     Running   0          6d4h
+kube-system   tunnelfront-5c587cdf5-kmdlv           1/1     Running   0          6d4h
+krishna@Azure:~$ kubectl get pods -n spinnaker
+No resources found in spinnaker namespace.
+krishna@Azure:~$ kubectl create namespace spinnaker
+Error from server (AlreadyExists): namespaces "spinnaker" already exists
+krishna@Azure:~$ kubectl exec -it hal-bd869b758-p2sll -n spinnaker bash
+kubectl exec [POD] [COMMAND] is DEPRECATED and will be removed in a future version. Use kubectl exec [POD] -- [COMMAND] instead.
+Error from server (NotFound): pods "hal-bd869b758-p2sll" not found
+krishna@Azure:~$ kubectl exec -it hal-bd869b758-p2sll bash
+kubectl exec [POD] [COMMAND] is DEPRECATED and will be removed in a future version. Use kubectl exec [POD] -- [COMMAND] instead.
+bash-5.0$ ls
+bin    dev    etc    home   lib    media  mnt    opt    proc   root   run    sbin   srv    sys    tmp    usr    var
+bash-5.0$ curl https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get > get_helm.sh
+bash: get_helm.sh: Permission denied
+bash-5.0$ curl https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get > install-helm.sh
+bash: install-helm.sh: Permission denied
+bash-5.0$ chmod u+x get_helm.sh
+chmod: get_helm.sh: No such file or directory
+bash-5.0$ chmod u+x install-helm.sh
+chmod: install-helm.sh: No such file or directory
+bash-5.0$ chmod u+x install-helm.sh
+chmod: install-helm.sh: No such file or directory
+bash-5.0$ exit
+exit
+command terminated with exit code 1
+krishna@Azure:~$ kubectl exec -it hal-bd869b758-p2sll bash
+kubectl exec [POD] [COMMAND] is DEPRECATED and will be removed in a future version. Use kubectl exec [POD] -- [COMMAND] instead.
+bash-5.0$ cd
+bash-5.0$

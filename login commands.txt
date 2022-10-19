@@ -1,0 +1,35 @@
+az login OR az login –use-device-code 
+login using ba-account. 
+ 
+az account set -s “72f74a79-764f-41bb-9b4c-f9b4ffd06d4f" 
+ 
+az aks get-credentials --resource-group az-entaks-nonprod-01-esco-dev-westus-rg-01 -n esco-aksba1-nonprod-westus-cluster-01
+
+kubectl get ns 
+It prompt for login with normal account. 
+
+kubectl config set-context --current --namespace=<insert-namespace-name-here>
+
+kubectl get all –n <name_Space> 
+
+List out all k8s components. 
+
+kubectl logs <name of component> -n <name_Space> -c <name_container> 
+
+kubectl logs <name of component> -n <name_Space> -c <name_container> > filename
+so u can check logs in that file that is stored in a c:\users\kthum02\filename - open with any editor
+
+kubectl describe logs <name of component> -n <name_Space> 
+
+kubectl describe <name of component> -n <name_Space>
+
+kubectl delete <name of component> -n <name_Space>
+
+kubectl get deployment -n <name_Space>
+
+kubectl get pods -n <name_Space>
+
+kubectl get all -n <name_Space>
+
+kubectl delete deployment <name of component> -n <name_Space>
+

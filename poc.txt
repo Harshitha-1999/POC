@@ -1,0 +1,943 @@
+krishna@Azure:~$ az aks get-credentials --resource-group RSG1 --name AKSCLUSTER1
+Merged "AKSCLUSTER1" as current context in /home/krishna/.kube/config
+krishna@Azure:~$ kubectl get nodes
+NAME                                STATUS   ROLES   AGE     VERSION
+aks-agentpool-38227642-vmss000000   Ready    agent   6m11s   v1.18.14
+aks-agentpool-38227642-vmss000001   Ready    agent   6m23s   v1.18.14
+aks-agentpool-38227642-vmss000002   Ready    agent   6m19s   v1.18.14
+krishna@Azure:~$ vim Azure-vote.yaml
+krishna@Azure:~$ kubectl apply -f Azure-vote.yaml
+deployment.apps/azure-vote-back created
+service/azure-vote-back created
+deployment.apps/azure-vote-front created
+service/azure-vote-front created
+krishna@Azure:~$ kubectl get service azure-vote-front --watch
+NAME               TYPE           CLUSTER-IP    EXTERNAL-IP      PORT(S)        AGE
+azure-vote-front   LoadBalancer   10.0.36.125   52.151.213.249   80:30878/TCP   23s
+^Z
+[1]+  Stopped                 kubectl get service azure-vote-front --watch
+krishna@Azure:~$ kubectl get nodes
+NAME                                STATUS   ROLES   AGE   VERSION
+aks-agentpool-38227642-vmss000000   Ready    agent   22m   v1.18.14
+--------------------------------------------------------------------
+
+SonarQube URL - http://52.224.192.176/
+
+Jenkins URL - http://52.149.250.233:8080/
+
+Sonartoken - 15786aecba61abde6c7ab13f050dc55f01c7b57a
+ 
+
+----------------------------------------------------
+poc 1 - https://docs.microsoft.com/en-us/azure/aks/kubernetes-walkthrough-portal
+
+poc 2 - https://www.digitalocean.com/community/tutorials/how-to-install-jenkins-on-kubernetes
+
+poc 3 - https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-manifests/
+
+poc 4 - sonarqube clone gitrepo - https://github.com/vamsiTechTuts/kubernetes.git
+
+poc 5 -https://docs.microsoft.com/en-us/azure/container-registry/container-registry-quickstart-task-cli
+
+poc 6 - https://www.linkedin.com/pulse/running-java-application-mysql-linked-docker-deepak-sureshkumar
+
+------------------------------------------------------
+pipe2 - code 
+
+pipeline{
+    agent any
+    
+    stages{
+        stage('Clone sources'){
+            steps{
+                git url: 'https://github.com/tkgregory/sonarqube-jacoco-code-coverage.git'
+            }
+        }
+        
+        stage('SonarQube analysis'){
+            steps{
+                withSonarQubeEnv('SonarQube'){
+                    sh "./gradlew sonarqube"
+                }
+            }
+        }
+    }
+}
+
+
+-------------------------
+cat deployment.yaml
+--------
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tomee-deployment
+  labels:
+    app: tomee
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: tomee
+  template:
+    metadata:
+      labels:
+        app: tomee
+    spec:
+      containers:
+      - name: tomee
+        image: devopsacr01.azurecr.io/tomeeear:v1
+        ports:
+        - containerPort: 8080
+
+------------------------------------
+cat svc.yaml
+---------
+apiVersion: v1
+kind: Service
+metadata:
+  name: tomee
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 8080
+  selector:
+    app: tomee
+
+
+----------------------------------------
+Requesting a Cloud Shell.Succeeded.
+Connecting terminal...
+
+Welcome to Azure Cloud Shell
+
+Type "az" to use Azure CLI
+Type "help" to learn about Cloud Shell
+
+krishna@Azure:~$ az aks get-credentials --resource-group RSG1 --name AKSCLUSTER1
+Merged "AKSCLUSTER1" as current context in /home/krishna/.kube/config
+krishna@Azure:~$ vim job.yaml
+krishna@Azure:~$ kubectl apply -f job.yaml
+job.batch/kubernetes-job-example created
+krishna@Azure:~$ kubectl get jobs
+NAME                     COMPLETIONS   DURATION   AGE
+kubernetes-job-example   0/1           39s        39s
+krishna@Azure:~$ kubectl get po
+NAME                           READY   STATUS    RESTARTS   AGE
+hal-bd869b758-7lxks            1/1     Running   0          4d23h
+kubernetes-job-example-7q99h   1/1     Running   0          65s
+postgres-d78c74c58-g95xl       1/1     Running   0          12d
+sonarqube-6fb58d8cb5-vpkf2     1/1     Running   0          12d
+krishna@Azure:~$ kubectl logs kubernetes-job-example-bc7s9 -f
+Error from server (NotFound): pods "kubernetes-job-example-bc7s9" not found
+krishna@Azure:~$ kubectl logs kubernetes-job-example-7q99h -f
+This Job will echo message 100 times
+1] Hey I will run till the job completes.
+2] Hey I will run till the job completes.
+3] Hey I will run till the job completes.
+4] Hey I will run till the job completes.
+5] Hey I will run till the job completes.
+6] Hey I will run till the job completes.
+7] Hey I will run till the job completes.
+8] Hey I will run till the job completes.
+9] Hey I will run till the job completes.
+10] Hey I will run till the job completes.
+11] Hey I will run till the job completes.
+12] Hey I will run till the job completes.
+13] Hey I will run till the job completes.
+14] Hey I will run till the job completes.
+15] Hey I will run till the job completes.
+16] Hey I will run till the job completes.
+17] Hey I will run till the job completes.
+18] Hey I will run till the job completes.
+19] Hey I will run till the job completes.
+20] Hey I will run till the job completes.
+21] Hey I will run till the job completes.
+22] Hey I will run till the job completes.
+23] Hey I will run till the job completes.
+24] Hey I will run till the job completes.
+25] Hey I will run till the job completes.
+26] Hey I will run till the job completes.
+27] Hey I will run till the job completes.
+28] Hey I will run till the job completes.
+29] Hey I will run till the job completes.
+30] Hey I will run till the job completes.
+31] Hey I will run till the job completes.
+32] Hey I will run till the job completes.
+33] Hey I will run till the job completes.
+34] Hey I will run till the job completes.
+35] Hey I will run till the job completes.
+36] Hey I will run till the job completes.
+37] Hey I will run till the job completes.
+38] Hey I will run till the job completes.
+39] Hey I will run till the job completes.
+40] Hey I will run till the job completes.
+41] Hey I will run till the job completes.
+42] Hey I will run till the job completes.
+43] Hey I will run till the job completes.
+44] Hey I will run till the job completes.
+45] Hey I will run till the job completes.
+46] Hey I will run till the job completes.
+47] Hey I will run till the job completes.
+48] Hey I will run till the job completes.
+49] Hey I will run till the job completes.
+50] Hey I will run till the job completes.
+51] Hey I will run till the job completes.
+52] Hey I will run till the job completes.
+53] Hey I will run till the job completes.
+54] Hey I will run till the job completes.
+55] Hey I will run till the job completes.
+56] Hey I will run till the job completes.
+57] Hey I will run till the job completes.
+58] Hey I will run till the job completes.
+59] Hey I will run till the job completes.
+60] Hey I will run till the job completes.
+61] Hey I will run till the job completes.
+62] Hey I will run till the job completes.
+63] Hey I will run till the job completes.
+64] Hey I will run till the job completes.
+65] Hey I will run till the job completes.
+66] Hey I will run till the job completes.
+67] Hey I will run till the job completes.
+68] Hey I will run till the job completes.
+69] Hey I will run till the job completes.
+70] Hey I will run till the job completes.
+71] Hey I will run till the job completes.
+72] Hey I will run till the job completes.
+73] Hey I will run till the job completes.
+74] Hey I will run till the job completes.
+75] Hey I will run till the job completes.
+76] Hey I will run till the job completes.
+77] Hey I will run till the job completes.
+78] Hey I will run till the job completes.
+79] Hey I will run till the job completes.
+80] Hey I will run till the job completes.
+81] Hey I will run till the job completes.
+82] Hey I will run till the job completes.
+83] Hey I will run till the job completes.
+84] Hey I will run till the job completes.
+85] Hey I will run till the job completes.
+86] Hey I will run till the job completes.
+87] Hey I will run till the job completes.
+88] Hey I will run till the job completes.
+89] Hey I will run till the job completes.
+90] Hey I will run till the job completes.
+91] Hey I will run till the job completes.
+92] Hey I will run till the job completes.
+93] Hey I will run till the job completes.
+94] Hey I will run till the job completes.
+95] Hey I will run till the job completes.
+96] Hey I will run till the job completes.
+97] Hey I will run till the job completes.
+98] Hey I will run till the job completes.
+99] Hey I will run till the job completes.
+100] Hey I will run till the job completes.
+krishna@Azure:~$ vim cron-jon.yaml
+krishna@Azure:~$ kubectl create -f cron-job.yaml
+error: the path "cron-job.yaml" does not exist
+krishna@Azure:~$ kubectl create -f cron-jon.yaml
+cronjob.batch/kubernetes-cron-job created
+krishna@Azure:~$ kubectl get cronjobs
+NAME                  SCHEDULE             SUSPEND   ACTIVE   LAST SCHEDULE   AGE
+kubernetes-cron-job   0,15,30,45 * * * *   False     0        <none>          18s
+krishna@Azure:~$ vim cron-jon.yaml
+krishna@Azure:~$ kubectl create -f cron-jon.yaml
+Error from server (AlreadyExists): error when creating "cron-jon.yaml": cronjobs.batch "kubernetes-cron-job" already exists
+krishna@Azure:~$ kubectl get cronjobs
+NAME                  SCHEDULE             SUSPEND   ACTIVE   LAST SCHEDULE   AGE
+kubernetes-cron-job   0,15,30,45 * * * *   False     0        5m49s           9m24s
+krishna@Azure:~$ vim cron-jon.yaml
+krishna@Azure:~$ kubectl update -f cron-jon.yaml
+Error: unknown command "update" for "kubectl"
+Run 'kubectl --help' for usage.
+krishna@Azure:~$ kubectl apply -f cron-jon.yaml
+Warning: resource cronjobs/kubernetes-cron-job is missing the kubectl.kubernetes.io/last-applied-configuration annotation which is required by kubectl apply. kubectl apply should only be used on resources created declaratively by either kubectl create --save-config or kubectl apply. The missing annotation will be patched automatically.
+cronjob.batch/kubernetes-cron-job configured
+krishna@Azure:~$ kubectl get cronjobs
+NAME                  SCHEDULE      SUSPEND   ACTIVE   LAST SCHEDULE   AGE
+kubernetes-cron-job   */1 * * * *   False     2        12s             12m
+krishna@Azure:~$ kubectl logs kubernetes-job-example-7q99h -f
+This Job will echo message 100 times
+1] Hey I will run till the job completes.
+2] Hey I will run till the job completes.
+3] Hey I will run till the job completes.
+4] Hey I will run till the job completes.
+5] Hey I will run till the job completes.
+6] Hey I will run till the job completes.
+7] Hey I will run till the job completes.
+8] Hey I will run till the job completes.
+9] Hey I will run till the job completes.
+10] Hey I will run till the job completes.
+11] Hey I will run till the job completes.
+12] Hey I will run till the job completes.
+13] Hey I will run till the job completes.
+14] Hey I will run till the job completes.
+15] Hey I will run till the job completes.
+16] Hey I will run till the job completes.
+17] Hey I will run till the job completes.
+18] Hey I will run till the job completes.
+19] Hey I will run till the job completes.
+20] Hey I will run till the job completes.
+21] Hey I will run till the job completes.
+22] Hey I will run till the job completes.
+23] Hey I will run till the job completes.
+24] Hey I will run till the job completes.
+25] Hey I will run till the job completes.
+26] Hey I will run till the job completes.
+27] Hey I will run till the job completes.
+28] Hey I will run till the job completes.
+29] Hey I will run till the job completes.
+30] Hey I will run till the job completes.
+31] Hey I will run till the job completes.
+32] Hey I will run till the job completes.
+33] Hey I will run till the job completes.
+34] Hey I will run till the job completes.
+35] Hey I will run till the job completes.
+36] Hey I will run till the job completes.
+37] Hey I will run till the job completes.
+38] Hey I will run till the job completes.
+39] Hey I will run till the job completes.
+40] Hey I will run till the job completes.
+41] Hey I will run till the job completes.
+42] Hey I will run till the job completes.
+43] Hey I will run till the job completes.
+44] Hey I will run till the job completes.
+45] Hey I will run till the job completes.
+46] Hey I will run till the job completes.
+47] Hey I will run till the job completes.
+48] Hey I will run till the job completes.
+49] Hey I will run till the job completes.
+50] Hey I will run till the job completes.
+51] Hey I will run till the job completes.
+52] Hey I will run till the job completes.
+53] Hey I will run till the job completes.
+54] Hey I will run till the job completes.
+55] Hey I will run till the job completes.
+56] Hey I will run till the job completes.
+57] Hey I will run till the job completes.
+58] Hey I will run till the job completes.
+59] Hey I will run till the job completes.
+60] Hey I will run till the job completes.
+61] Hey I will run till the job completes.
+62] Hey I will run till the job completes.
+63] Hey I will run till the job completes.
+64] Hey I will run till the job completes.
+65] Hey I will run till the job completes.
+66] Hey I will run till the job completes.
+67] Hey I will run till the job completes.
+68] Hey I will run till the job completes.
+69] Hey I will run till the job completes.
+70] Hey I will run till the job completes.
+71] Hey I will run till the job completes.
+72] Hey I will run till the job completes.
+73] Hey I will run till the job completes.
+74] Hey I will run till the job completes.
+75] Hey I will run till the job completes.
+76] Hey I will run till the job completes.
+77] Hey I will run till the job completes.
+78] Hey I will run till the job completes.
+79] Hey I will run till the job completes.
+80] Hey I will run till the job completes.
+81] Hey I will run till the job completes.
+82] Hey I will run till the job completes.
+83] Hey I will run till the job completes.
+84] Hey I will run till the job completes.
+85] Hey I will run till the job completes.
+86] Hey I will run till the job completes.
+87] Hey I will run till the job completes.
+88] Hey I will run till the job completes.
+89] Hey I will run till the job completes.
+90] Hey I will run till the job completes.
+91] Hey I will run till the job completes.
+92] Hey I will run till the job completes.
+93] Hey I will run till the job completes.
+94] Hey I will run till the job completes.
+95] Hey I will run till the job completes.
+96] Hey I will run till the job completes.
+97] Hey I will run till the job completes.
+98] Hey I will run till the job completes.
+99] Hey I will run till the job completes.
+100] Hey I will run till the job completes.
+krishna@Azure:~$ kubectl get pods
+NAME                                   READY   STATUS      RESTARTS   AGE
+hal-bd869b758-7lxks                    1/1     Running     0          4d23h
+kubernetes-cron-job-1620108000-rbm5w   0/1     Completed   0          12m
+kubernetes-cron-job-1620108480-xbgtp   0/1     Completed   0          3m28s
+kubernetes-cron-job-1620108540-jgl5f   1/1     Running     0          3m18s
+kubernetes-cron-job-1620108600-bcd2m   1/1     Running     0          2m17s
+kubernetes-cron-job-1620108660-8w2xm   1/1     Running     0          77s
+kubernetes-cron-job-1620108720-7ps28   1/1     Running     0          17s
+kubernetes-job-example-7q99h           0/1     Completed   0          27m
+postgres-d78c74c58-g95xl               1/1     Running     0          12d
+sonarqube-6fb58d8cb5-vpkf2             1/1     Running     0          12d
+krishna@Azure:~$ vim cron-jon.yaml
+krishna@Azure:~$ kubectl get pods
+NAME                                   READY   STATUS      RESTARTS   AGE
+hal-bd869b758-7lxks                    1/1     Running     0          4d23h
+kubernetes-cron-job-1620108540-jgl5f   0/1     Completed   0          5m48s
+kubernetes-cron-job-1620108600-bcd2m   0/1     Completed   0          4m47s
+kubernetes-cron-job-1620108660-8w2xm   0/1     Completed   0          3m47s
+kubernetes-cron-job-1620108720-7ps28   1/1     Running     0          2m47s
+kubernetes-cron-job-1620108780-z4db6   1/1     Running     0          107s
+kubernetes-cron-job-1620108840-c26xk   1/1     Running     0          47s
+kubernetes-job-example-7q99h           0/1     Completed   0          30m
+postgres-d78c74c58-g95xl               1/1     Running     0          12d
+sonarqube-6fb58d8cb5-vpkf2             1/1     Running     0          12d
+krishna@Azure:~$
+
+-------------------------------------------
+
+
+Requesting a Cloud Shell.Succeeded.
+Connecting terminal...
+
+Welcome to Azure Cloud Shell
+
+Type "az" to use Azure CLI
+Type "help" to learn about Cloud Shell
+
+krishna@Azure:~$ ls
+Azure-vote.yaml  cron-jon.yaml  get_helm.sh     jenkins-service.yaml  job.yaml  k8s-sonarqube      spinacct.yaml
+clouddrive       dockerfile     HelloWorld.jar  jenkins.yaml          k8s-apps  quick-install.yml  spinsvcs.yaml
+krishna@Azure:~$ docker images
+Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?
+krishna@Azure:~$ ls -la /var/run/docker.sock
+ls: cannot access '/var/run/docker.sock': No such file or directory
+krishna@Azure:~$ systemctl
+System has not been booted with systemd as init system (PID 1). Can't operate.
+Failed to connect to bus: Host is down
+krishna@Azure:~$ az aks get-credentials --resource-group RSG1 --name AKSCLUSTER1
+Merged "AKSCLUSTER1" as current context in /home/krishna/.kube/config
+krishna@Azure:~$ docker images
+Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?
+krishna@Azure:~$ service docker start
+docker: unrecognized service
+krishna@Azure:~$ docker -v
+Docker version 19.03.13+azure, build cd8016b6bcc51a51f577bcffb37e6a870f7813f9
+krishna@Azure:~$ kubectl get pods
+NAME                                   READY   STATUS      RESTARTS   AGE
+hal-bd869b758-7lxks                    1/1     Running     0          5d4h
+kubernetes-cron-job-1620126060-8kz85   0/1     Completed   0          5m56s
+kubernetes-cron-job-1620126120-ds5km   0/1     Completed   0          4m56s
+kubernetes-cron-job-1620126180-ftvkn   0/1     Completed   0          3m56s
+kubernetes-cron-job-1620126240-sfhb4   1/1     Running     0          2m56s
+kubernetes-cron-job-1620126300-s7gqz   1/1     Running     0          115s
+kubernetes-cron-job-1620126360-mdn2s   1/1     Running     0          55s
+kubernetes-job-example-7q99h           0/1     Completed   0          5h22m
+postgres-d78c74c58-g95xl               1/1     Running     0          12d
+sonarqube-6fb58d8cb5-vpkf2             1/1     Running     0          12d
+krishna@Azure:~$ kubectl delete -f cron-jon.yaml
+cronjob.batch "kubernetes-cron-job" deleted
+krishna@Azure:~$ kubectl get pods
+NAME                                   READY   STATUS        RESTARTS   AGE
+hal-bd869b758-7lxks                    1/1     Running       0          5d4h
+kubernetes-cron-job-1620127500-qt7ww   1/1     Terminating   0          2m53s
+kubernetes-cron-job-1620127560-5rn8b   1/1     Terminating   0          113s
+kubernetes-cron-job-1620127620-ghw8b   1/1     Terminating   0          53s
+kubernetes-job-example-7q99h           0/1     Completed     0          5h43m
+postgres-d78c74c58-g95xl               1/1     Running       0          13d
+sonarqube-6fb58d8cb5-vpkf2             1/1     Running       0          12d
+krishna@Azure:~$ kubectl get svc
+NAME         TYPE           CLUSTER-IP     EXTERNAL-IP      PORT(S)          AGE
+kubernetes   ClusterIP      10.0.0.1       <none>           443/TCP          13d
+postgres     NodePort       10.0.172.225   <none>           5432:31445/TCP   13d
+sonarqube    LoadBalancer   10.0.216.188   52.224.192.176   80:32051/TCP     12d
+krishna@Azure:~$ kubectl get nodes
+NAME                                STATUS   ROLES   AGE   VERSION
+aks-agentpool-38227642-vmss000000   Ready    agent   13d   v1.18.14
+krishna@Azure:~$ kubectl get pods
+NAME                           READY   STATUS      RESTARTS   AGE
+hal-bd869b758-7lxks            1/1     Running     0          5d4h
+kubernetes-job-example-7q99h   0/1     Completed   0          5h45m
+postgres-d78c74c58-g95xl       1/1     Running     0          13d
+sonarqube-6fb58d8cb5-vpkf2     1/1     Running     0          12d
+krishna@Azure:~$ kubectl start postgres-d78c74c58-g95xl
+Error: unknown command "start" for "kubectl"
+Run 'kubectl --help' for usage.
+krishna@Azure:~$ kubectl --help
+kubectl controls the Kubernetes cluster manager.
+
+ Find more information at: https://kubernetes.io/docs/reference/kubectl/overview/
+
+Basic Commands (Beginner):
+  create        Create a resource from a file or from stdin.
+  expose        Take a replication controller, service, deployment or pod and expose it as a new Kubernetes Service
+  run           Run a particular image on the cluster
+  set           Set specific features on objects
+
+Basic Commands (Intermediate):
+  explain       Documentation of resources
+  get           Display one or many resources
+  edit          Edit a resource on the server
+  delete        Delete resources by filenames, stdin, resources and names, or by resources and label selector
+
+Deploy Commands:
+  rollout       Manage the rollout of a resource
+  scale         Set a new size for a Deployment, ReplicaSet or Replication Controller
+  autoscale     Auto-scale a Deployment, ReplicaSet, StatefulSet, or ReplicationController
+
+Cluster Management Commands:
+  certificate   Modify certificate resources.
+  cluster-info  Display cluster info
+  top           Display Resource (CPU/Memory) usage.
+  cordon        Mark node as unschedulable
+  uncordon      Mark node as schedulable
+  drain         Drain node in preparation for maintenance
+  taint         Update the taints on one or more nodes
+
+Troubleshooting and Debugging Commands:
+  describe      Show details of a specific resource or group of resources
+  logs          Print the logs for a container in a pod
+  attach        Attach to a running container
+  exec          Execute a command in a container
+  port-forward  Forward one or more local ports to a pod
+  proxy         Run a proxy to the Kubernetes API server
+  cp            Copy files and directories to and from containers.
+  auth          Inspect authorization
+  debug         Create debugging sessions for troubleshooting workloads and nodes
+
+Advanced Commands:
+  diff          Diff live version against would-be applied version
+  apply         Apply a configuration to a resource by filename or stdin
+  patch         Update field(s) of a resource
+  replace       Replace a resource by filename or stdin
+  wait          Experimental: Wait for a specific condition on one or many resources.
+  kustomize     Build a kustomization target from a directory or URL.
+
+Settings Commands:
+  label         Update the labels on a resource
+  annotate      Update the annotations on a resource
+  completion    Output shell completion code for the specified shell (bash or zsh)
+
+Other Commands:
+  api-resources Print the supported API resources on the server
+  api-versions  Print the supported API versions on the server, in the form of "group/version"
+  config        Modify kubeconfig files
+  plugin        Provides utilities for interacting with plugins.
+  version       Print the client and server version information
+
+Usage:
+  kubectl [flags] [options]
+
+Use "kubectl <command> --help" for more information about a given command.
+Use "kubectl options" for a list of global command-line options (applies to all commands).
+krishna@Azure:~$ kubectl stop pods hal-bd869b758-7lxks
+Error: unknown command "stop" for "kubectl"
+
+Did you mean this?
+        top
+
+Run 'kubectl --help' for usage.
+krishna@Azure:~$ az acr create --resource-group myResourceGroup \
+> kubectl get pods
+
+
+the following arguments are required: --name/-n, --sku
+
+TRY THIS:
+az acr create --name MyRegistry --resource-group MyResourceGroup --sku Standard
+Create a managed container registry with the Standard SKU.
+
+az acr create --location westus2 --name MyRegistry --resource-group MyResourceGroup --sku Classic
+Create an Azure Container Registry. (autogenerated)
+
+https://docs.microsoft.com/en-US/cli/azure/acr#az_acr_create
+Read more about the command in reference docs
+krishna@Azure:~$
+krishna@Azure:~$
+krishna@Azure:~$ az acr create --resource-group myResourceGroup \
+>   --name myContainerRegistry008
+
+
+the following arguments are required: --sku
+
+TRY THIS:
+az acr create --name MyRegistry --resource-group MyResourceGroup --sku Standard
+Create a managed container registry with the Standard SKU.
+
+az acr create --location westus2 --name MyRegistry --resource-group MyResourceGroup --sku Classic
+Create an Azure Container Registry. (autogenerated)
+
+https://docs.microsoft.com/en-US/cli/azure/acr#az_acr_create
+Read more about the command in reference docs
+krishna@Azure:~$
+krishna@Azure:~$
+krishna@Azure:~$ az acr create --resource-group RSG1 --name Container1 --sku basic
+The registry DNS name container1.azurecr.io is already in use. You can check if the name is already claimed using following API: https://docs.microsoft.com/en-us/rest/api/containerregistry/registries/checknameavailability
+krishna@Azure:~$ az acr create --resource-group RSG1 --name Containerreg1 --sku basic
+The registry DNS name containerreg1.azurecr.io is already in use. You can check if the name is already claimed using following API: https://docs.microsoft.com/en-us/rest/api/containerregistry/registries/checknameavailability
+krishna@Azure:~$ az acr create --resource-group RSG1 --name reg1 --sku basic
+Parameter 'registry_name' must have length greater than 5.
+krishna@Azure:~$ az acr create --resource-group RSG1 --name harshireg1 --sku basic
+{- Starting ..
+  "adminUserEnabled": false,
+  "anonymousPullEnabled": false,
+  "creationDate": "2021-05-04T11:47:31.873366+00:00",
+  "dataEndpointEnabled": false,
+  "dataEndpointHostNames": [],
+  "encryption": {
+    "keyVaultProperties": null,
+    "status": "disabled"
+  },
+  "id": "/subscriptions/343645c0-a380-4786-9f9d-0a889b7ce074/resourceGroups/RSG1/providers/Microsoft.ContainerRegistry/registries/harshireg1",
+  "identity": null,
+  "location": "eastus",
+  "loginServer": "harshireg1.azurecr.io",
+  "name": "harshireg1",
+  "networkRuleBypassOptions": "AzureServices",
+  "networkRuleSet": null,
+  "policies": {
+    "quarantinePolicy": {
+      "status": "disabled"
+    },
+    "retentionPolicy": {
+      "days": 7,
+      "lastUpdatedTime": "2021-05-04T11:47:35.496422+00:00",
+      "status": "disabled"
+    },
+    "trustPolicy": {
+      "status": "disabled",
+      "type": "Notary"
+    }
+  },
+  "privateEndpointConnections": [],
+  "provisioningState": "Succeeded",
+  "publicNetworkAccess": "Enabled",
+  "resourceGroup": "RSG1",
+  "sku": {
+    "name": "Basic",
+    "tier": "Basic"
+  },
+  "status": null,
+  "systemData": {
+    "createdAt": "2021-05-04T11:47:31.873366+00:00",
+    "createdBy": "t.krishnaharshitha@tcs.com",
+    "createdByType": "User",
+    "lastModifiedAt": "2021-05-04T11:47:31.873366+00:00",
+    "lastModifiedBy": "t.krishnaharshitha@tcs.com",
+    "lastModifiedByType": "User"
+  },
+  "tags": {},
+  "type": "Microsoft.ContainerRegistry/registries",
+  "zoneRedundancy": "Disabled"
+}
+krishna@Azure:~$ echo FROM https://copydata.blob.core.windows.net/file/HelloJava (1).jar > Dockerfile
+bash: syntax error near unexpected token `('
+krishna@Azure:~$ echo FROM https://copydata.blob.core.windows.net/file/"HelloJava (1).jar" > Dockerfile
+krishna@Azure:~$ az acr build --image sample/hello-world:v1 \
+>   --registry myContainerRegistry008 \
+>   --file Dockerfile .
+The resource with name 'myContainerRegistry008' and type 'Microsoft.ContainerRegistry/registries' could not be found in subscription 'Albertsons_POC (343645c0-a380-4786-9f9d-0a889b7ce074)'.
+krishna@Azure:~$
+krishna@Azure:~$
+krishna@Azure:~$ az acr build --image HelloJava (1).jar:v1   --registry harshireg1   --file Dockerfile .
+bash: syntax error near unexpected token `('
+krishna@Azure:~$ az acr build --image "HelloJava (1).jar":v1   --registry harshireg1   --file Dockerfile .
+Packing source code into tar to upload...
+Uploading archived source code from '/tmp/build_archive_bae1e6037ef24e41b30749de80dcb3ba.tar.gz'...
+Sending context (312.605 MiB) to registry: harshireg1...
+InvalidInputValue: Some of the properties of 'runRequest' are invalid.. InnerErrors: DockerBuildRequest:Image name 'HelloJava (1).jar:v1' is invalid.
+The acceptable patterns are 'repository' or 'repository:tag'.The repository and tag names follow the standardized docker repository and tag naming conventions. Tag templates are supported within '{{' and '}}'.
+Please refer to docs for more information on using image name and tag:  https://aka.ms/az/acr/az-acr-build
+krishna@Azure:~$ az acr build --image helloworldjar .
+the following arguments are required: --registry/-r
+
+TRY THIS:
+az acr build --image sample/hello-world:{{.Run.ID}} --registry MyRegistry .
+Queue a local context as a Linux build, tag it, and push it to the registry.
+
+az acr build --registry MyRegistry --file Windows.Dockerfile --platform windows https://github.com/Azure/acr-builder.git
+Queue a remote GitHub context as a Windows build, tag it, and push it to the registry.
+
+https://docs.microsoft.com/en-US/cli/azure/acr#az_acr_build
+Read more about the command in reference docs
+krishna@Azure:~$ az acr build --image helloworldjar --registry harshireg1 .
+Packing source code into tar to upload...
+Uploading archived source code from '/tmp/build_archive_b38c54790fab47fda47a3b93fe5765ce.tar.gz'...
+Sending context (312.606 MiB) to registry: harshireg1...
+Queued a build with ID: ca1
+Waiting for an agent...
+2021/05/04 12:02:35 Downloading source code...
+2021/05/04 12:02:43 Finished downloading source code
+2021/05/04 12:02:44 Using acb_vol_4b394c94-f7ac-4237-9e87-041c0c904de0 as the home volume
+2021/05/04 12:02:44 Setting up Docker configuration...
+2021/05/04 12:02:45 Successfully set up Docker configuration
+2021/05/04 12:02:45 Logging in to registry: harshireg1.azurecr.io
+2021/05/04 12:02:46 Successfully logged into harshireg1.azurecr.io
+2021/05/04 12:02:46 Executing step ID: build. Timeout(sec): 28800, Working directory: '', Network: ''
+2021/05/04 12:02:46 Scanning for dependencies...
+2021/05/04 12:02:47 Output from dependency scanning: fatal: not a git repository (or any parent up to mount point /)
+Stopping at filesystem boundary (GIT_DISCOVERY_ACROSS_FILESYSTEM not set).
+fatal: not a git repository (or any parent up to mount point /)
+Stopping at filesystem boundary (GIT_DISCOVERY_ACROSS_FILESYSTEM not set).
+unable to understand line FROM https://copydata.blob.core.windows.net/file/HelloJava (1).jar
+failed to run step ID: build: failed to scan dependencies: exit status 1
+
+Run ID: ca1 failed after 13s. Error: failed during run, err: exit status 1
+Run failed
+krishna@Azure:~$ cat Dockerfile
+FROM https://copydata.blob.core.windows.net/file/HelloJava (1).jar
+krishna@Azure:~$ az acr build --image "HelloJava (1).jar":v1   --registry harshireg1   --file dockerfile .
+Packing source code into tar to upload...
+Uploading archived source code from '/tmp/build_archive_7163eb5def95444a8b442a387eaa170a.tar.gz'...
+Sending context (312.607 MiB) to registry: harshireg1...
+InvalidInputValue: Some of the properties of 'runRequest' are invalid.. InnerErrors: DockerBuildRequest:Image name 'HelloJava (1).jar:v1' is invalid.
+The acceptable patterns are 'repository' or 'repository:tag'.The repository and tag names follow the standardized docker repository and tag naming conventions. Tag templates are supported within '{{' and '}}'.
+Please refer to docs for more information on using image name and tag:  https://aka.ms/az/acr/az-acr-build
+krishna@Azure:~$ az acr build --image helloworldjar   --registry harshireg1   --file dockerfile .
+Packing source code into tar to upload...
+Uploading archived source code from '/tmp/build_archive_388d61f7d526419b9a7f75f2d36dd7ed.tar.gz'...
+Sending context (312.608 MiB) to registry: harshireg1...
+Queued a build with ID: ca2
+Waiting for an agent...
+2021/05/04 12:11:27 Downloading source code...
+2021/05/04 12:11:36 Finished downloading source code
+2021/05/04 12:11:36 Using acb_vol_5d130a84-ec8e-4bbe-9d9f-f0454e55664f as the home volume
+2021/05/04 12:11:36 Setting up Docker configuration...
+2021/05/04 12:11:37 Successfully set up Docker configuration
+2021/05/04 12:11:37 Logging in to registry: harshireg1.azurecr.io
+2021/05/04 12:11:39 Successfully logged into harshireg1.azurecr.io
+2021/05/04 12:11:39 Executing step ID: build. Timeout(sec): 28800, Working directory: '', Network: ''
+2021/05/04 12:11:39 Scanning for dependencies...
+2021/05/04 12:11:39 Successfully scanned dependencies
+2021/05/04 12:11:39 Launching container with name: build
+Sending build context to Docker daemon  395.8MB
+Step 1/5 : FROM java:8
+8: Pulling from library/java
+5040bd298390: Pulling fs layer
+fce5728aad85: Pulling fs layer
+76610ec20bf5: Pulling fs layer
+60170fec2151: Pulling fs layer
+e98f73de8f0d: Pulling fs layer
+11f7af24ed9c: Pulling fs layer
+49e2d6393f32: Pulling fs layer
+bb9cdec9c7f3: Pulling fs layer
+60170fec2151: Waiting
+e98f73de8f0d: Waiting
+11f7af24ed9c: Waiting
+49e2d6393f32: Waiting
+bb9cdec9c7f3: Waiting
+fce5728aad85: Verifying Checksum
+fce5728aad85: Download complete
+60170fec2151: Verifying Checksum
+60170fec2151: Download complete
+e98f73de8f0d: Verifying Checksum
+e98f73de8f0d: Download complete
+11f7af24ed9c: Verifying Checksum
+11f7af24ed9c: Download complete
+76610ec20bf5: Verifying Checksum
+76610ec20bf5: Download complete
+bb9cdec9c7f3: Verifying Checksum
+bb9cdec9c7f3: Download complete
+5040bd298390: Verifying Checksum
+5040bd298390: Download complete
+49e2d6393f32: Verifying Checksum
+49e2d6393f32: Download complete
+5040bd298390: Pull complete
+fce5728aad85: Pull complete
+76610ec20bf5: Pull complete
+60170fec2151: Pull complete
+e98f73de8f0d: Pull complete
+11f7af24ed9c: Pull complete
+49e2d6393f32: Pull complete
+bb9cdec9c7f3: Pull complete
+Digest: sha256:c1ff613e8ba25833d2e1940da0940c3824f03f802c449f3d1815a66b7f8c0e9d
+Status: Downloaded newer image for java:8
+ ---> d23bdf5b1b1b
+Step 2/5 : WORKDIR /
+ ---> Running in 41a4bd7141a1
+Removing intermediate container 41a4bd7141a1
+ ---> 2f02e3978303
+Step 3/5 : ADD HelloWorld.jar HelloWorld.jar
+ ---> e1e1425541bc
+Step 4/5 : EXPOSE 8080
+ ---> Running in 52989d60d0fb
+Removing intermediate container 52989d60d0fb
+ ---> 32fbd43bebc6
+Step 5/5 : CMD java - jar HelloWorld.jar
+ ---> Running in 5a95831225df
+Removing intermediate container 5a95831225df
+ ---> 11f4f15d3787
+Successfully built 11f4f15d3787
+Successfully tagged harshireg1.azurecr.io/helloworldjar:latest
+2021/05/04 12:12:07 Successfully executed container: build
+2021/05/04 12:12:07 Executing step ID: push. Timeout(sec): 3600, Working directory: '', Network: ''
+2021/05/04 12:12:07 Pushing image: harshireg1.azurecr.io/helloworldjar:latest, attempt 1
+The push refers to repository [harshireg1.azurecr.io/helloworldjar]
+537964415f03: Preparing
+35c20f26d188: Preparing
+c3fe59dd9556: Preparing
+6ed1a81ba5b6: Preparing
+a3483ce177ce: Preparing
+ce6c8756685b: Preparing
+30339f20ced0: Preparing
+0eb22bfb707d: Preparing
+a2ae92ffcd29: Preparing
+30339f20ced0: Waiting
+0eb22bfb707d: Waiting
+a2ae92ffcd29: Waiting
+ce6c8756685b: Waiting
+537964415f03: Pushed
+35c20f26d188: Pushed
+a3483ce177ce: Pushed
+6ed1a81ba5b6: Pushed
+ce6c8756685b: Pushed
+a2ae92ffcd29: Pushed
+0eb22bfb707d: Pushed
+30339f20ced0: Pushed
+c3fe59dd9556: Pushed
+latest: digest: sha256:f9a3745bbc2ee37134616ffd60812cc23f6e2b6bbd465890e6c47d3c6ba46e1f size: 2207
+2021/05/04 12:12:42 Successfully pushed image: harshireg1.azurecr.io/helloworldjar:latest
+2021/05/04 12:12:42 Step ID: build marked as successful (elapsed time in seconds: 28.575423)
+2021/05/04 12:12:42 Populating digests for step ID: build...
+2021/05/04 12:12:44 Successfully populated digests for step ID: build
+2021/05/04 12:12:44 Step ID: push marked as successful (elapsed time in seconds: 35.334995)
+2021/05/04 12:12:44 The following dependencies were found:
+2021/05/04 12:12:44
+- image:
+    registry: harshireg1.azurecr.io
+    repository: helloworldjar
+    tag: latest
+    digest: sha256:f9a3745bbc2ee37134616ffd60812cc23f6e2b6bbd465890e6c47d3c6ba46e1f
+  runtime-dependency:
+    registry: registry.hub.docker.com
+    repository: library/java
+    tag: "8"
+    digest: sha256:c1ff613e8ba25833d2e1940da0940c3824f03f802c449f3d1815a66b7f8c0e9d
+  git: {}
+
+Run ID: ca2 was successful after 1m18s
+krishna@Azure:~$ az acr run --registry myContainerRegistry008 \
+>   --cmd '$Registry/sample/hello-world:v1' /dev/null
+The resource with name 'myContainerRegistry008' and type 'Microsoft.ContainerRegistry/registries' could not be found in subscription 'Albertsons_POC (343645c0-a380-4786-9f9d-0a889b7ce074)'.
+
+krishna@Azure:~$
+krishna@Azure:~$ az acr run --registry harshireg1   --cmd '$Registry/helloworldjar'  /dev/null
+Queued a run with ID: ca3
+Waiting for an agent...
+2021/05/04 12:14:49 Alias support enabled for version >= 1.1.0, please see https://aka.ms/acr/tasks/task-aliases for more information.
+2021/05/04 12:14:49 Creating Docker network: acb_default_network, driver: 'bridge'
+2021/05/04 12:14:49 Successfully set up Docker network: acb_default_network
+2021/05/04 12:14:49 Setting up Docker configuration...
+2021/05/04 12:14:50 Successfully set up Docker configuration
+2021/05/04 12:14:50 Logging in to registry: harshireg1.azurecr.io
+2021/05/04 12:14:53 Successfully logged into harshireg1.azurecr.io
+2021/05/04 12:14:53 Executing step ID: acb_step_0. Timeout(sec): 600, Working directory: '', Network: 'acb_default_network'
+2021/05/04 12:14:53 Launching container with name: acb_step_0
+Unable to find image 'harshireg1.azurecr.io/helloworldjar:latest' locally
+latest: Pulling from helloworldjar
+7448db3b31eb: Pulling fs layer
+c36604fa7939: Pulling fs layer
+29e8ef0e3340: Pulling fs layer
+a0c934d2565d: Pulling fs layer
+a360a17c9cab: Pulling fs layer
+cfcc996af805: Pulling fs layer
+2cf014724202: Pulling fs layer
+4bc402a00dfe: Pulling fs layer
+b50c2a53c26d: Pulling fs layer
+a0c934d2565d: Waiting
+a360a17c9cab: Waiting
+cfcc996af805: Waiting
+2cf014724202: Waiting
+4bc402a00dfe: Waiting
+b50c2a53c26d: Waiting
+c36604fa7939: Verifying Checksum
+c36604fa7939: Download complete
+29e8ef0e3340: Verifying Checksum
+29e8ef0e3340: Download complete
+a0c934d2565d: Verifying Checksum
+a0c934d2565d: Download complete
+a360a17c9cab: Verifying Checksum
+a360a17c9cab: Download complete
+cfcc996af805: Verifying Checksum
+cfcc996af805: Download complete
+7448db3b31eb: Verifying Checksum
+7448db3b31eb: Download complete
+4bc402a00dfe: Verifying Checksum
+4bc402a00dfe: Download complete
+b50c2a53c26d: Verifying Checksum
+b50c2a53c26d: Download complete
+2cf014724202: Verifying Checksum
+2cf014724202: Download complete
+7448db3b31eb: Pull complete
+c36604fa7939: Pull complete
+29e8ef0e3340: Pull complete
+a0c934d2565d: Pull complete
+a360a17c9cab: Pull complete
+cfcc996af805: Pull complete
+2cf014724202: Pull complete
+4bc402a00dfe: Pull complete
+b50c2a53c26d: Pull complete
+Digest: sha256:f9a3745bbc2ee37134616ffd60812cc23f6e2b6bbd465890e6c47d3c6ba46e1f
+Status: Downloaded newer image for harshireg1.azurecr.io/helloworldjar:latest
+Unrecognized option: -
+Error: Could not create the Java Virtual Machine.
+Error: A fatal exception has occurred. Program will exit.
+2021/05/04 12:15:17 Container failed during run: acb_step_0. No retries remaining.
+failed to run step ID: acb_step_0: exit status 1
+
+Run ID: ca3 failed after 30s. Error: failed during run, err: exit status 1
+Run failed
+krishna@Azure:~$
+
+
+
+--------------------
+kriti file
+
+
+Requesting a Cloud Shell.Succeeded.
+Connecting terminal...
+
+krishna@Azure:~$ az aks get-credentials --resource-group devopsrg --name devops
+Merged "devops" as current context in /home/krishna/.kube/config
+krishna@Azure:~$ kubectl get cronjobs
+No resources found in default namespace.
+krishna@Azure:~$ kubectl get namespaces
+NAME              STATUS   AGE
+cronjob           Active   6d19h
+default           Active   41d
+ingress-nginx     Active   40d
+kube-node-lease   Active   41d
+kube-public       Active   41d
+kube-system       Active   41d
+krishna@Azure:~$ kubectl get pods -n cronjob
+NAME                         READY   STATUS      RESTARTS   AGE
+hellojava-1620195420-5ml5x   0/1     Completed   0          2m44s
+hellojava-1620195480-n8mtb   0/1     Completed   0          103s
+hellojava-1620195540-8jlh4   0/1     Completed   0          43s
+krishna@Azure:~$ kubectl get pods -n cronjob
+NAME                         READY   STATUS      RESTARTS   AGE
+hellojava-1620195420-5ml5x   0/1     Completed   0          3m10s
+hellojava-1620195480-n8mtb   0/1     Completed   0          2m9s
+hellojava-1620195540-8jlh4   0/1     Completed   0          69s
+hellojava-1620195600-tnlmj   0/1     Completed   0          9s
+krishna@Azure:~$ kubectl delete pods -n cronjob
+error: resource(s) were provided, but no name was specified
+krishna@Azure:~$ ls
+Azure-vote.yaml  cron-job.yaml  dockerfile  get_helm.sh     jenkins-service.yaml  job.yaml  k8s-sonarqube      spinacct.yaml
+clouddrive       cron-jon.yaml  Dockerfile  HelloWorld.jar  jenkins.yaml          k8s-apps  quick-install.yml  spinsvcs.yaml
+krishna@Azure:~$ kubectl get all
+NAME                 TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)   AGE
+service/kubernetes   ClusterIP   10.0.0.1     <none>        443/TCP   41d
+krishna@Azure:~$ kubectl get -n cronjob
+You must specify the type of resource to get. Use "kubectl api-resources" for a complete list of supported resources.
+
+error: Required resource not specified.
+Use "kubectl explain <resource>" for a detailed description of that resource (e.g. kubectl explain pods).
+See 'kubectl get -h' for help and examples
+krishna@Azure:~$ kubectl get all -n cronjob
+NAME                             READY   STATUS      RESTARTS   AGE
+pod/hellojava-1620195780-vrd98   0/1     Completed   0          2m40s
+pod/hellojava-1620195840-dqcnr   0/1     Completed   0          100s
+pod/hellojava-1620195900-6cs2p   0/1     Completed   0          40s
+
+NAME                             COMPLETIONS   DURATION   AGE
+job.batch/hellojava-1620195780   1/1           1s         2m42s
+job.batch/hellojava-1620195840   1/1           2s         102s
+job.batch/hellojava-1620195900   1/1           2s         42s
+
+NAME                      SCHEDULE      SUSPEND   ACTIVE   LAST SCHEDULE   AGE
+cronjob.batch/hellojava   */1 * * * *   False     0        47s             5d1h
+
+

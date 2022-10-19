@@ -1,0 +1,87 @@
+Requesting a Cloud Shell.Succeeded.
+Connecting terminal...
+
+Welcome to Azure Cloud Shell
+
+Type "az" to use Azure CLI
+Type "help" to learn about Cloud Shell
+
+vikrant@Azure:~$ kubectl get services --all-namespaces
+NAMESPACE       NAME                             TYPE           CLUSTER-IP     EXTERNAL-IP     PORT(S)                      AGE
+default         azure-vote-back                  ClusterIP      10.0.31.221    <none>          6379/TCP                     18d
+default         azure-vote-front                 LoadBalancer   10.0.29.42     52.191.233.71   80:30278/TCP                 18d
+default         kubernetes                       ClusterIP      10.0.0.1       <none>          443/TCP                      18d
+jenkins         harshitha                        LoadBalancer   10.0.164.112   52.149.173.99   8080:32759/TCP               12d
+jenkins         jenkins                          NodePort       10.0.131.127   <none>          8080:30000/TCP               12d
+jenkins         jenkins-jnlp                     ClusterIP      10.0.65.49     <none>          50000/TCP                    12d
+jenkins         public-svc                       LoadBalancer   10.0.63.75     20.75.133.30    80:31947/TCP                 12d
+kube-system     healthmodel-replicaset-service   ClusterIP      10.0.34.140    <none>          25227/TCP                    18d
+kube-system     kube-dns                         ClusterIP      10.0.0.10      <none>          53/UDP,53/TCP                18d
+kube-system     metrics-server                   ClusterIP      10.0.133.50    <none>          443/TCP                      18d
+nginx-ingress   nginx-ingress                    LoadBalancer   10.0.39.236    52.146.84.182   80:31890/TCP,443:30411/TCP   5d19h
+spinnaker       spin-deck-np                     LoadBalancer   10.0.189.27    40.76.133.131   9000:30165/TCP               38h
+spinnaker       spin-gate-np                     LoadBalancer   10.0.176.176   40.76.132.245   8084:32442/TCP               38h
+vikrant@Azure:~$ vim spinnaker.yaml
+vikrant@Azure:~$ vim jenkins.yaml
+vikrant@Azure:~$ hal config version edit --version 1.8.1
+bash: hal: command not found
+vikrant@Azure:~$ vim spinacct.yaml
+vikrant@Azure:~$ vim spinacct.yaml
+vikrant@Azure:~$ kubectl create -f spinacct.yaml
+Error from server (AlreadyExists): error when creating "spinacct.yaml": serviceaccounts "spinnaker-service-account" already exists
+Error from server (AlreadyExists): error when creating "spinacct.yaml": clusterrolebindings.rbac.authorization.k8s.io "spinnaker-role-binding" already exists
+vikrant@Azure:~$ vim spinsvcs.yaml
+vikrant@Azure:~$ vim spinsvcs.yaml
+vikrant@Azure:~$ kubectl create -f spinsvcs.yaml
+Error from server (AlreadyExists): error when creating "spinsvcs.yaml": services "spin-gate-np" already exists
+Error from server (AlreadyExists): error when creating "spinsvcs.yaml": services "spin-deck-np" already exists
+vikrant@Azure:~$ kubectl create deployment hal --image gcr.io/spinnaker-marketplace/halyard:1.5.0
+error: failed to create deployment: deployments.apps "hal" already exists
+vikrant@Azure:~$ kubectl get deployment
+NAME               READY   UP-TO-DATE   AVAILABLE   AGE
+azure-vote-back    1/1     1            1           18d
+azure-vote-front   1/1     1            1           18d
+hal                1/1     1            1           38h
+vikrant@Azure:~$ kubectl edit deploy hal
+deployment.apps/hal edited
+vikrant@Azure:~$ kubectl get pods
+NAME                                READY   STATUS              RESTARTS   AGE
+azure-vote-back-798985f86b-2v4gg    1/1     Running             0          18d
+azure-vote-front-84c8bf64fc-xmqrv   1/1     Running             0          18d
+hal-587d7fc6ff-7rb8z                1/1     Running             0          39h
+hal-bd869b758-cs8vv                 0/1     ContainerCreating   0          22s
+vikrant@Azure:~$ kubectl get pods
+NAME                                READY   STATUS        RESTARTS   AGE
+azure-vote-back-798985f86b-2v4gg    1/1     Running       0          18d
+azure-vote-front-84c8bf64fc-xmqrv   1/1     Running       0          18d
+hal-587d7fc6ff-7rb8z                1/1     Terminating   0          39h
+hal-bd869b758-cs8vv                 1/1     Running       0          38s
+vikrant@Azure:~$ kubectl get pods
+NAME                                READY   STATUS        RESTARTS   AGE
+azure-vote-back-798985f86b-2v4gg    1/1     Running       0          18d
+azure-vote-front-84c8bf64fc-xmqrv   1/1     Running       0          18d
+hal-587d7fc6ff-7rb8z                1/1     Terminating   0          39h
+hal-bd869b758-cs8vv                 1/1     Running       0          47s
+vikrant@Azure:~$ kubectl get pods
+NAME                                READY   STATUS        RESTARTS   AGE
+azure-vote-back-798985f86b-2v4gg    1/1     Running       0          18d
+azure-vote-front-84c8bf64fc-xmqrv   1/1     Running       0          18d
+hal-587d7fc6ff-7rb8z                1/1     Terminating   0          39h
+hal-bd869b758-cs8vv                 1/1     Running       0          53s
+vikrant@Azure:~$ kubectl exec -it <CONTAINER-NAME> bash
+bash: CONTAINER-NAME: No such file or directory
+vikrant@Azure:~$ kubectl exec -it <hal-bd869b758-cs8vv> bash
+bash: hal-bd869b758-cs8vv: No such file or directory
+vikrant@Azure:~$ kubectl exec -it hal-bd869b758-cs8vv bash
+kubectl exec [POD] [COMMAND] is DEPRECATED and will be removed in a future version. Use kubectl exec [POD] -- [COMMAND] instead.
+bash-5.0$
+bash-5.0$
+bash-5.0$
+bash-5.0$ exit
+vikrant@Azure:~$ exit
+
+------------------------------------------------------
+$ curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3
+$ chmod 700 get_helm.sh
+$ ./get_helm.sh
+

@@ -1,0 +1,294 @@
+krishna@Azure:~$ helm create harshi
+Creating harshi
+WARNING: File "/home/krishna/harshi/Chart.yaml" already exists. Overwriting.
+WARNING: File "/home/krishna/harshi/values.yaml" already exists. Overwriting.
+WARNING: File "/home/krishna/harshi/.helmignore" already exists. Overwriting.
+WARNING: File "/home/krishna/harshi/templates/ingress.yaml" already exists. Overwriting.
+WARNING: File "/home/krishna/harshi/templates/deployment.yaml" already exists. Overwriting.
+WARNING: File "/home/krishna/harshi/templates/service.yaml" already exists. Overwriting.
+WARNING: File "/home/krishna/harshi/templates/serviceaccount.yaml" already exists. Overwriting.
+WARNING: File "/home/krishna/harshi/templates/hpa.yaml" already exists. Overwriting.
+WARNING: File "/home/krishna/harshi/templates/NOTES.txt" already exists. Overwriting.
+WARNING: File "/home/krishna/harshi/templates/_helpers.tpl" already exists. Overwriting.
+WARNING: File "/home/krishna/harshi/templates/tests/test-connection.yaml" already exists. Overwriting.
+krishna@Azure:~$ ls
+angular-nodejs-aks  clover         deployment.yaml  get_helm.sh  HelloWorld.jar        jenkins.yaml  k8s-sonarqube  package-lock.json   spinacct.yaml  values.yaml
+Azure-vote.yaml     cron-job.yaml  dockerfile       harshi       InstallHalyard.sh     job.yaml      manifest.yml   quick-install.yaml  spinsvcs.yaml
+clouddrive          cron-jon.yaml  Dockerfile       hello-helm   jenkins-service.yaml  k8s-apps      minio-pv.yml   quick-install.yml   svc.yaml
+krishna@Azure:~$ cd harshi
+krishna@Azure:~/harshi$ ls
+charts  Chart.yaml  templates  values.yaml
+krishna@Azure:~/harshi$ cd charts
+krishna@Azure:~/harshi/charts$ cd templates
+bash: cd: templates: No such file or directory
+krishna@Azure:~/harshi/charts$ ls
+krishna@Azure:~/harshi/charts$ cd ..
+krishna@Azure:~/harshi$ cd templates
+krishna@Azure:~/harshi/templates$ ls
+deployment.yaml  _helpers.tpl  hpa.yaml  ingress.yaml  NOTES.txt  serviceaccount.yaml  service.yaml  tests
+krishna@Azure:~/harshi/templates$ cd ..
+krishna@Azure:~/harshi$ cd templates
+krishna@Azure:~/harshi/templates$ cd tests
+krishna@Azure:~/harshi/templates/tests$ ls
+test-connection.yaml
+krishna@Azure:~/harshi/templates/tests$ cd ..
+krishna@Azure:~/harshi/templates$ cd ..
+krishna@Azure:~/harshi$ helm lint
+==> Linting .
+[INFO] Chart.yaml: icon is recommended
+
+1 chart(s) linted, 0 chart(s) failed
+krishna@Azure:~/harshi$ cd ..
+krishna@Azure:~$ helm install harshi --dry-run --debug ./harshi/
+install.go:172: [debug] Original chart version: ""
+install.go:189: [debug] CHART PATH: /home/krishna/harshi
+
+NAME: harshi
+LAST DEPLOYED: Sun Jun 13 13:24:20 2021
+NAMESPACE: default
+STATUS: pending-install
+REVISION: 1
+USER-SUPPLIED VALUES:
+{}
+
+COMPUTED VALUES:
+affinity: {}
+autoscaling:
+  enabled: false
+  maxReplicas: 100
+  minReplicas: 1
+  targetCPUUtilizationPercentage: 80
+fullnameOverride: ""
+image:
+  pullPolicy: IfNotPresent
+  repository: nginx
+  tag: ""
+imagePullSecrets: []
+ingress:
+  annotations: {}
+  enabled: false
+  hosts:
+  - host: chart-example.local
+    paths: []
+  tls: []
+nameOverride: ""
+nodeSelector: {}
+podAnnotations: {}
+podSecurityContext: {}
+replicaCount: 1
+resources: {}
+securityContext: {}
+service:
+  port: 80
+  type: ClusterIP
+serviceAccount:
+  annotations: {}
+  create: true
+  name: ""
+tolerations: []
+
+HOOKS:
+---
+# Source: harshi/templates/tests/test-connection.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "harshi-test-connection"
+  labels:
+    helm.sh/chart: harshi-0.1.0
+    app.kubernetes.io/name: harshi
+    app.kubernetes.io/instance: harshi
+    app.kubernetes.io/version: "1.16.0"
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    "helm.sh/hook": test
+spec:
+  containers:
+    - name: wget
+      image: busybox
+      command: ['wget']
+      args: ['harshi:80']
+  restartPolicy: Never
+MANIFEST:
+---
+# Source: harshi/templates/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: harshi
+  labels:
+    helm.sh/chart: harshi-0.1.0
+    app.kubernetes.io/name: harshi
+    app.kubernetes.io/instance: harshi
+    app.kubernetes.io/version: "1.16.0"
+    app.kubernetes.io/managed-by: Helm
+---
+# Source: harshi/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: harshi
+  labels:
+    helm.sh/chart: harshi-0.1.0
+    app.kubernetes.io/name: harshi
+    app.kubernetes.io/instance: harshi
+    app.kubernetes.io/version: "1.16.0"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: harshi
+    app.kubernetes.io/instance: harshi
+---
+# Source: harshi/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: harshi
+  labels:
+    helm.sh/chart: harshi-0.1.0
+    app.kubernetes.io/name: harshi
+    app.kubernetes.io/instance: harshi
+    app.kubernetes.io/version: "1.16.0"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: harshi
+      app.kubernetes.io/instance: harshi
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: harshi
+        app.kubernetes.io/instance: harshi
+    spec:
+      serviceAccountName: harshi
+      securityContext:
+        {}
+      containers:
+        - name: harshi
+          securityContext:
+            {}
+          image: "nginx:1.16.0"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+          resources:
+            {}
+
+NOTES:
+1. Get the application URL by running these commands:
+  export POD_NAME=$(kubectl get pods --namespace default -l "app.kubernetes.io/name=harshi,app.kubernetes.io/instance=harshi" -o jsonpath="{.items[0].metadata.name}")
+  export CONTAINER_PORT=$(kubectl get pod --namespace default $POD_NAME -o jsonpath="{.spec.containers[0].ports[0].containerPort}")
+  echo "Visit http://127.0.0.1:8080 to use your application"
+  kubectl --namespace default port-forward $POD_NAME 8080:$CONTAINER_PORT
+krishna@Azure:~$ helm install harshi ./harshi/ --set service.type=LoadBalancer
+NAME: harshi
+LAST DEPLOYED: Sun Jun 13 13:25:52 2021
+NAMESPACE: default
+STATUS: deployed
+REVISION: 1
+NOTES:
+1. Get the application URL by running these commands:
+     NOTE: It may take a few minutes for the LoadBalancer IP to be available.
+           You can watch the status of by running 'kubectl get --namespace default svc -w harshi'
+  export SERVICE_IP=$(kubectl get svc --namespace default harshi --template "{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}")
+  echo http://$SERVICE_IP:80
+krishna@Azure:~$ helm list
+NAME    NAMESPACE       REVISION        UPDATED                                 STATUS          CHART           APP VERSION
+harshi  default         1               2021-06-13 13:25:52.8134554 +0000 UTC   deployed        harshi-0.1.0    1.16.0
+krishna@Azure:~$ kubectl get all
+NAME                                             READY   STATUS             RESTARTS   AGE
+pod/angular-nodejs-deployment-79b7cd496f-7zfzf   0/1     ImagePullBackOff   0          2d5h
+pod/angular-nodejs-deployment-79b7cd496f-nfrqh   0/1     ImagePullBackOff   0          2d5h
+pod/angular-nodejs-deployment-79b7cd496f-xkjpm   0/1     ImagePullBackOff   0          2d5h
+pod/hal-bd869b758-2qmqr                          1/1     Running            0          20d
+pod/harshi-86b868bd6f-g4mjs                      1/1     Running            0          36s
+pod/nginx-deployment-5dd495cfb4-p85d9            1/1     Running            0          19d
+pod/nginx-deployment-5dd495cfb4-qzkwt            1/1     Running            0          19d
+pod/nginx-deployment-5dd495cfb4-w277g            1/1     Running            0          19d
+pod/nodejs-deployment-785c76dc9c-9wdjk           0/1     ImagePullBackOff   0          2d5h
+pod/nodejs-deployment-785c76dc9c-bxk7r           0/1     ImagePullBackOff   0          2d5h
+pod/nodejs-deployment-785c76dc9c-mfjqq           0/1     ImagePullBackOff   0          2d5h
+pod/tomee-deployment-5d4569dbf7-ldxgg            0/1     ImagePullBackOff   0          3d
+pod/tomee-deployment-5d4569dbf7-p564j            0/1     ImagePullBackOff   0          3d
+pod/tomee-deployment-5d4569dbf7-s7vvz            0/1     ImagePullBackOff   0          3d
+
+NAME                 TYPE           CLUSTER-IP     EXTERNAL-IP   PORT(S)          AGE
+service/harshi       LoadBalancer   10.0.251.163   20.84.24.79   80:31860/TCP     36s
+service/kubernetes   ClusterIP      10.0.0.1       <none>        443/TCP          81d
+service/my-app       LoadBalancer   10.0.77.168    20.81.61.67   8080:32031/TCP   2d5h
+service/nodejs       LoadBalancer   10.0.159.75    20.84.27.21   8080:32225/TCP   2d5h
+
+NAME                                        READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/angular-nodejs-deployment   0/3     3            0           2d5h
+deployment.apps/hal                         1/1     1            1           20d
+deployment.apps/harshi                      1/1     1            1           37s
+deployment.apps/nginx-deployment            3/3     3            3           30d
+deployment.apps/nodejs-deployment           0/3     3            0           2d5h
+deployment.apps/tomee-deployment            0/3     3            0           3d
+
+NAME                                                   DESIRED   CURRENT   READY   AGE
+replicaset.apps/angular-nodejs-deployment-79b7cd496f   3         3         0       2d5h
+replicaset.apps/hal-587d7fc6ff                         0         0         0       20d
+replicaset.apps/hal-bd869b758                          1         1         1       20d
+replicaset.apps/harshi-86b868bd6f                      1         1         1       37s
+replicaset.apps/nginx-deployment-5dd495cfb4            3         3         3       30d
+replicaset.apps/nodejs-deployment-785c76dc9c           3         3         0       2d5h
+replicaset.apps/tomee-deployment-5d4569dbf7            3         3         0       3d
+krishna@Azure:~$ helm uninstall harshi
+release "harshi" uninstalled
+krishna@Azure:~$ helm list
+NAME    NAMESPACE       REVISION        UPDATED STATUS  CHART   APP VERSION
+krishna@Azure:~$ kubectl get all
+NAME                                             READY   STATUS             RESTARTS   AGE
+pod/angular-nodejs-deployment-79b7cd496f-7zfzf   0/1     ImagePullBackOff   0          2d5h
+pod/angular-nodejs-deployment-79b7cd496f-nfrqh   0/1     ImagePullBackOff   0          2d5h
+pod/angular-nodejs-deployment-79b7cd496f-xkjpm   0/1     ImagePullBackOff   0          2d5h
+pod/hal-bd869b758-2qmqr                          1/1     Running            0          20d
+pod/nginx-deployment-5dd495cfb4-p85d9            1/1     Running            0          19d
+pod/nginx-deployment-5dd495cfb4-qzkwt            1/1     Running            0          19d
+pod/nginx-deployment-5dd495cfb4-w277g            1/1     Running            0          19d
+pod/nodejs-deployment-785c76dc9c-9wdjk           0/1     ImagePullBackOff   0          2d5h
+pod/nodejs-deployment-785c76dc9c-bxk7r           0/1     ImagePullBackOff   0          2d5h
+pod/nodejs-deployment-785c76dc9c-mfjqq           0/1     ImagePullBackOff   0          2d5h
+pod/tomee-deployment-5d4569dbf7-ldxgg            0/1     ImagePullBackOff   0          3d
+pod/tomee-deployment-5d4569dbf7-p564j            0/1     ErrImagePull       0          3d
+pod/tomee-deployment-5d4569dbf7-s7vvz            0/1     ImagePullBackOff   0          3d
+
+NAME                 TYPE           CLUSTER-IP    EXTERNAL-IP   PORT(S)          AGE
+service/kubernetes   ClusterIP      10.0.0.1      <none>        443/TCP          81d
+service/my-app       LoadBalancer   10.0.77.168   20.81.61.67   8080:32031/TCP   2d5h
+service/nodejs       LoadBalancer   10.0.159.75   20.84.27.21   8080:32225/TCP   2d5h
+
+NAME                                        READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/angular-nodejs-deployment   0/3     3            0           2d5h
+deployment.apps/hal                         1/1     1            1           20d
+deployment.apps/nginx-deployment            3/3     3            3           30d
+deployment.apps/nodejs-deployment           0/3     3            0           2d5h
+deployment.apps/tomee-deployment            0/3     3            0           3d
+
+NAME                                                   DESIRED   CURRENT   READY   AGE
+replicaset.apps/angular-nodejs-deployment-79b7cd496f   3         3         0       2d5h
+replicaset.apps/hal-587d7fc6ff                         0         0         0       20d
+replicaset.apps/hal-bd869b758                          1         1         1       20d
+replicaset.apps/nginx-deployment-5dd495cfb4            3         3         3       30d
+replicaset.apps/nodejs-deployment-785c76dc9c           3         3         0       2d5h
+replicaset.apps/tomee-deployment-5d4569dbf7            3         3         0       3d
+krishna@Azure:~$

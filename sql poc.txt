@@ -1,0 +1,287 @@
+http://www.java2s.com/ref/jar/mysql-connector-java-5.1.6.jar.zip ----link jar file
+
+
+E2EABS1@nodepoc:~$ sudo docker run -d --name db -e MYSQL_ROOT_PASSWORD=simple -e MYSQL_DATABASE=firstdb  -e MYSQL_USER=user -e MYSQL_PASSWORD=pass123  mysql
+Unable to find image 'mysql:latest' locally
+latest: Pulling from library/mysql
+b4d181a07f80: Pull complete
+a462b60610f5: Pull complete
+578fafb77ab8: Pull complete
+524046006037: Pull complete
+d0cbe54c8855: Pull complete
+aa18e05cc46d: Pull complete
+32ca814c833f: Pull complete
+9ecc8abdb7f5: Pull complete
+ad042b682e0f: Pull complete
+71d327c6bb78: Pull complete
+165d1d10a3fa: Pull complete
+2f40c47d0626: Pull complete
+Digest: sha256:52b8406e4c32b8cf0557f1b74517e14c5393aff5cf0384eff62d9e81f4985d4b
+Status: Downloaded newer image for mysql:latest
+57c8abe574663dbf526f1e63ccf9cc0116ddbfce1de0bd99cfdd1e51091d2254
+E2EABS1@nodepoc:~$ sudo docker exec -it db bash
+root@57c8abe57466:/#  mysql -h 127.0.0.1 -P 3306 -uuser -ppass123 firstdb
+mysql: [Warning] Using a password on the command line interface can be insecure.
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 8
+Server version: 8.0.25 MySQL Community Server - GPL
+
+Copyright (c) 2000, 2021, Oracle and/or its affiliates.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+mysql> CREATE TABLE Persons (PersonID int, LastName varchar(255), FirstName varchar(255), Address varchar(255), City varchar(255) );
+Query OK, 0 rows affected (0.14 sec)
+
+mysql> INSERT INTO Persons (PersonID, LastName, FirstName, Address, City) VALUES (1, 'Sureshkumar', 'Deepak', 'Jackal Creek','Johannesburg');
+Query OK, 1 row affected (0.03 sec)
+
+mysql> read escape sequence
+E2EABS1@nodepoc:~$ sudo docker ps
+CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS                 NAMES
+57c8abe57466        mysql               "docker-entrypoint.s…"   4 minutes ago       Up 4 minutes        3306/tcp, 33060/tcp   db
+E2EABS1@nodepoc:~$ vi Dockerfile
+E2EABS1@nodepoc:~$ vi DockerConnectMySQL.java
+E2EABS1@nodepoc:~$ sudo docker build -t javadbapp .
+error checking context: 'no permission to read from '/home/E2EABS1/.bash_history''.
+E2EABS1@nodepoc:~$ sudo docker build -t javadbapp .
+error checking context: 'no permission to read from '/home/E2EABS1/.bash_history''.
+E2EABS1@nodepoc:~$  docker build -t javadbapp .
+error checking context: 'no permission to read from '/home/E2EABS1/.bash_history''.
+E2EABS1@nodepoc:~$ ls
+DockerConnectMySQL.java  Dockerfile  angular-nodejs-aks  angular2-docker-hello-world  hello-helm  snap
+E2EABS1@nodepoc:~$ mkdir dbapp
+E2EABS1@nodepoc:~$ ls
+DockerConnectMySQL.java  Dockerfile  angular-nodejs-aks  angular2-docker-hello-world  dbapp  hello-helm  snap
+E2EABS1@nodepoc:~$ cat Dockerfile
+FROM java:8
+COPY . /
+WORKDIR /
+RUN javac DockerConnectMySQL.java
+CMD ["java", "-classpath", "mysql-connector-java-5.1.6.jar:.","DockerConnectMySQL"]
+E2EABS1@nodepoc:~$ mv Dockerfile dbapp
+E2EABS1@nodepoc:~$ ls
+DockerConnectMySQL.java  angular-nodejs-aks  angular2-docker-hello-world  dbapp  hello-helm  snap
+E2EABS1@nodepoc:~$ mv DockerConnectMySQL.java dbapp
+E2EABS1@nodepoc:~$ ls
+angular-nodejs-aks  angular2-docker-hello-world  dbapp  hello-helm  snap
+E2EABS1@nodepoc:~$ ca dbapp
+ca: command not found
+E2EABS1@nodepoc:~$ cd dbapp
+E2EABS1@nodepoc:~/dbapp$ ls
+DockerConnectMySQL.java  Dockerfile
+E2EABS1@nodepoc:~/dbapp$ sudo docker build -t javadbapp .
+Sending build context to Docker daemon  4.608kB
+Step 1/5 : FROM java:8
+8: Pulling from library/java
+5040bd298390: Pull complete
+fce5728aad85: Pull complete
+76610ec20bf5: Pull complete
+60170fec2151: Pull complete
+e98f73de8f0d: Pull complete
+11f7af24ed9c: Pull complete
+49e2d6393f32: Pull complete
+bb9cdec9c7f3: Pull complete
+Digest: sha256:c1ff613e8ba25833d2e1940da0940c3824f03f802c449f3d1815a66b7f8c0e9d
+Status: Downloaded newer image for java:8
+ ---> d23bdf5b1b1b
+Step 2/5 : COPY . /
+ ---> 5bfa95e279e5
+Step 3/5 : WORKDIR /
+ ---> Running in ddd75f10ff92
+Removing intermediate container ddd75f10ff92
+ ---> 1e2efd92cbcb
+Step 4/5 : RUN javac DockerConnectMySQL.java
+ ---> Running in 8d19f0f73067
+Removing intermediate container 8d19f0f73067
+ ---> 53234cf730c6
+Step 5/5 : CMD ["java", "-classpath", "mysql-connector-java-5.1.6.jar:.","DockerConnectMySQL"]
+ ---> Running in cdbd931286f0
+Removing intermediate container cdbd931286f0
+ ---> ba5c62c39e0c
+Successfully built ba5c62c39e0c
+Successfully tagged javadbapp:latest
+E2EABS1@nodepoc:~/dbapp$ sudo docker run javadbapp
+java.lang.ClassNotFoundException: com.mysql.jdbc.Driver
+        at java.net.URLClassLoader.findClass(URLClassLoader.java:381)
+        at java.lang.ClassLoader.loadClass(ClassLoader.java:424)
+        at sun.misc.Launcher$AppClassLoader.loadClass(Launcher.java:331)
+        at java.lang.ClassLoader.loadClass(ClassLoader.java:357)
+        at java.lang.Class.forName0(Native Method)
+        at java.lang.Class.forName(Class.java:264)
+        at DockerConnectMySQL.main(DockerConnectMySQL.java:14)
+E2EABS1@nodepoc:~/dbapp$ sudo docker run --name linkcontainers --link db javadbapp
+java.lang.ClassNotFoundException: com.mysql.jdbc.Driver
+        at java.net.URLClassLoader.findClass(URLClassLoader.java:381)
+        at java.lang.ClassLoader.loadClass(ClassLoader.java:424)
+        at sun.misc.Launcher$AppClassLoader.loadClass(Launcher.java:331)
+        at java.lang.ClassLoader.loadClass(ClassLoader.java:357)
+        at java.lang.Class.forName0(Native Method)
+        at java.lang.Class.forName(Class.java:264)
+        at DockerConnectMySQL.main(DockerConnectMySQL.java:14)
+E2EABS1@nodepoc:~/dbapp$  docker run --name linkcontainers --link db javadbapp
+docker: Got permission denied while trying to connect to the Docker daemon socket at unix:///var/run/docker.sock: Post http://%2Fvar%2Frun%2Fdocker.sock/v1.40/containers/create?name=linkcontainers: dial unix /var/run/docker.sock: connect: permission denied.
+See 'docker run --help'.
+E2EABS1@nodepoc:~/dbapp$ sudo docker run --name linkcontainers --link db javadbapp
+docker: Error response from daemon: Conflict. The container name "/linkcontainers" is already in use by container "5a380bdb5eabf47d9e14be29609511bfa52d73dad5466e113cd97ac2f4364bd8". You have to remove (or rename) that container to be able to reuse that name.
+See 'docker run --help'.
+E2EABS1@nodepoc:~/dbapp$ sudo docker run -it javadbapp
+java.lang.ClassNotFoundException: com.mysql.jdbc.Driver
+        at java.net.URLClassLoader.findClass(URLClassLoader.java:381)
+        at java.lang.ClassLoader.loadClass(ClassLoader.java:424)
+        at sun.misc.Launcher$AppClassLoader.loadClass(Launcher.java:331)
+        at java.lang.ClassLoader.loadClass(ClassLoader.java:357)
+        at java.lang.Class.forName0(Native Method)
+        at java.lang.Class.forName(Class.java:264)
+        at DockerConnectMySQL.main(DockerConnectMySQL.java:14)
+E2EABS1@nodepoc:~/dbapp$
+
+install myqsql connectivity jar file :
+--------------------------------------------------------
+
+E2EABS1@nodepoc:~/dbapp$ wget http://www.java2s.com/ref/jar/mysql-connector-java-5.1.6.jar.zip
+--2021-07-13 12:51:17--  http://www.java2s.com/ref/jar/mysql-connector-java-5.1.6.jar.zip
+Resolving www.java2s.com (www.java2s.com)... 52.217.165.221
+Connecting to www.java2s.com (www.java2s.com)|52.217.165.221|:80... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 674807 (659K) [application/zip]
+Saving to: ‘mysql-connector-java-5.1.6.jar.zip’
+
+mysql-connector-java-5.1.6.jar.zip        100%[=====================================================================================>] 658.99K  --.-KB/s    in 0.04s
+
+2021-07-13 12:51:17 (16.6 MB/s) - ‘mysql-connector-java-5.1.6.jar.zip’ saved [674807/674807]
+
+E2EABS1@nodepoc:~/dbapp$ ls
+DockerConnectMySQL.java  Dockerfile  mysql-connector-java-5.1.6.jar.zip  mysql-connector-java_8.0.25-1ubuntu20.04_all.deb
+E2EABS1@nodepoc:~/dbapp$ rm -f mysql-connector-java_8.0.25-1ubuntu20.04_all.deb
+E2EABS1@nodepoc:~/dbapp$ ls
+DockerConnectMySQL.java  Dockerfile  mysql-connector-java-5.1.6.jar.zip
+E2EABS1@nodepoc:~/dbapp$ sudo apt-get install unzip
+Reading package lists... Done
+Building dependency tree
+Reading state information... Done
+Suggested packages:
+  zip
+The following NEW packages will be installed:
+  unzip
+0 upgraded, 1 newly installed, 0 to remove and 77 not upgraded.
+Need to get 169 kB of archives.
+After this operation, 593 kB of additional disk space will be used.
+Get:1 http://azure.archive.ubuntu.com/ubuntu focal/main amd64 unzip amd64 6.0-25ubuntu1 [169 kB]
+Fetched 169 kB in 0s (4984 kB/s)
+Selecting previously unselected package unzip.
+(Reading database ... 59018 files and directories currently installed.)
+Preparing to unpack .../unzip_6.0-25ubuntu1_amd64.deb ...
+Unpacking unzip (6.0-25ubuntu1) ...
+Setting up unzip (6.0-25ubuntu1) ...
+Processing triggers for mime-support (3.64ubuntu1) ...
+Processing triggers for man-db (2.9.1-1) ...
+E2EABS1@nodepoc:~/dbapp$ unzip mysql-connector-java-5.1.6.jar.zip
+Archive:  mysql-connector-java-5.1.6.jar.zip
+  inflating: mysql-connector-java-5.1.6.jar
+E2EABS1@nodepoc:~/dbapp$ ls
+DockerConnectMySQL.java  Dockerfile  mysql-connector-java-5.1.6.jar  mysql-connector-java-5.1.6.jar.zip
+
+again build image and run javadbapp:
+--------------------------------------------------------
+
+E2EABS1@nodepoc:~/dbapp$ sudo docker build -t javadbapp .
+Sending build context to Docker daemon  1.384MB
+Step 1/5 : FROM java:8
+ ---> d23bdf5b1b1b
+Step 2/5 : COPY . /
+ ---> 6fa63d9b391a
+Step 3/5 : WORKDIR /
+ ---> Running in 4fd8e544d65b
+Removing intermediate container 4fd8e544d65b
+ ---> ce7db5750179
+Step 4/5 : RUN javac DockerConnectMySQL.java
+ ---> Running in 1e325106b826
+Removing intermediate container 1e325106b826
+ ---> 6a02d8675f90
+Step 5/5 : CMD ["java", "-classpath", "mysql-connector-java-5.1.6.jar:.","DockerConnectMySQL"]
+ ---> Running in f44fdf9f75d8
+Removing intermediate container f44fdf9f75d8
+ ---> a55b2b8a8119
+Successfully built a55b2b8a8119
+Successfully tagged javadbapp:latest
+E2EABS1@nodepoc:~/dbapp$ sudo docker run javadbapp
+Connecting to database...
+com.mysql.jdbc.exceptions.jdbc4.CommunicationsException: Communications link failure
+
+Last packet sent to the server was 0 ms ago.
+        at sun.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method)
+        at sun.reflect.NativeConstructorAccessorImpl.newInstance(NativeConstructorAccessorImpl.java:62)
+        at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:45)
+        at java.lang.reflect.Constructor.newInstance(Constructor.java:423)
+        at com.mysql.jdbc.Util.handleNewInstance(Util.java:406)
+        at com.mysql.jdbc.SQLError.createCommunicationsException(SQLError.java:1074)
+        at com.mysql.jdbc.ConnectionImpl.createNewIO(ConnectionImpl.java:2103)
+        at com.mysql.jdbc.ConnectionImpl.<init>(ConnectionImpl.java:718)
+        at com.mysql.jdbc.JDBC4Connection.<init>(JDBC4Connection.java:46)
+        at sun.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method)
+        at sun.reflect.NativeConstructorAccessorImpl.newInstance(NativeConstructorAccessorImpl.java:62)
+        at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:45)
+        at java.lang.reflect.Constructor.newInstance(Constructor.java:423)
+        at com.mysql.jdbc.Util.handleNewInstance(Util.java:406)
+        at com.mysql.jdbc.ConnectionImpl.getInstance(ConnectionImpl.java:302)
+        at com.mysql.jdbc.NonRegisteringDriver.connect(NonRegisteringDriver.java:282)
+        at java.sql.DriverManager.getConnection(DriverManager.java:664)
+        at java.sql.DriverManager.getConnection(DriverManager.java:247)
+        at DockerConnectMySQL.main(DockerConnectMySQL.java:17)
+Caused by: java.net.UnknownHostException: db: Name or service not known
+        at java.net.Inet4AddressImpl.lookupAllHostAddr(Native Method)
+        at java.net.InetAddress$2.lookupAllHostAddr(InetAddress.java:928)
+        at java.net.InetAddress.getAddressesFromNameService(InetAddress.java:1323)
+        at java.net.InetAddress.getAllByName0(InetAddress.java:1276)
+        at java.net.InetAddress.getAllByName(InetAddress.java:1192)
+        at java.net.InetAddress.getAllByName(InetAddress.java:1126)
+        at com.mysql.jdbc.StandardSocketFactory.connect(StandardSocketFactory.java:243)
+        at com.mysql.jdbc.MysqlIO.<init>(MysqlIO.java:280)
+        at com.mysql.jdbc.ConnectionImpl.createNewIO(ConnectionImpl.java:2026)
+        ... 12 more
+
+
+
+running linking containers command, container already in use, so remove the container and againg run the linking containers command:
+------------------------------------------------------------------------------------------------------------------------------------------
+E2EABS1@nodepoc:~/dbapp$ sudo docker run --name linkcontainers --link db javadbapp
+docker: Error response from daemon: Conflict. The container name "/linkcontainers" is already in use by container "5a380bdb5eabf47d9e14be29609511bfa52d73dad5466e113cd97ac2f4364bd8". You have to remove (or rename) that container to be able to reuse that name.
+See 'docker run --help'.
+E2EABS1@nodepoc:~/dbapp$ sudo docker container kill 5a380bdb5eabf47d9e14be29609511bfa52d73dad5466e113cd97ac2f4364bd8
+Error response from daemon: Cannot kill container: 5a380bdb5eabf47d9e14be29609511bfa52d73dad5466e113cd97ac2f4364bd8: Container 5a380bdb5eabf47d9e14be29609511bfa52d73dad5466e113cd97ac2f4364bd8 is not running
+E2EABS1@nodepoc:~/dbapp$ sudo docker container rm 5a380bdb5eabf47d9e14be29609511bfa52d73dad5466e113cd97ac2f4364bd8
+5a380bdb5eabf47d9e14be29609511bfa52d73dad5466e113cd97ac2f4364bd8
+E2EABS1@nodepoc:~/dbapp$ sudo docker run --name linkcontainers --link db javadbapp
+Connecting to database...
+com.mysql.jdbc.exceptions.jdbc4.MySQLNonTransientConnectionException: Client does not support authentication protocol requested by server; consider upgrading MySQL client
+        at sun.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method)
+        at sun.reflect.NativeConstructorAccessorImpl.newInstance(NativeConstructorAccessorImpl.java:62)
+        at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:45)
+        at java.lang.reflect.Constructor.newInstance(Constructor.java:423)
+        at com.mysql.jdbc.Util.handleNewInstance(Util.java:406)
+        at com.mysql.jdbc.Util.getInstance(Util.java:381)
+        at com.mysql.jdbc.SQLError.createSQLException(SQLError.java:984)
+        at com.mysql.jdbc.SQLError.createSQLException(SQLError.java:956)
+        at com.mysql.jdbc.MysqlIO.checkErrorPacket(MysqlIO.java:3491)
+        at com.mysql.jdbc.MysqlIO.checkErrorPacket(MysqlIO.java:3423)
+        at com.mysql.jdbc.MysqlIO.checkErrorPacket(MysqlIO.java:910)
+        at com.mysql.jdbc.MysqlIO.secureAuth411(MysqlIO.java:3923)
+        at com.mysql.jdbc.MysqlIO.doHandshake(MysqlIO.java:1273)
+        at com.mysql.jdbc.ConnectionImpl.createNewIO(ConnectionImpl.java:2031)
+        at com.mysql.jdbc.ConnectionImpl.<init>(ConnectionImpl.java:718)
+        at com.mysql.jdbc.JDBC4Connection.<init>(JDBC4Connection.java:46)
+        at sun.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method)
+        at sun.reflect.NativeConstructorAccessorImpl.newInstance(NativeConstructorAccessorImpl.java:62)
+        at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:45)
+        at java.lang.reflect.Constructor.newInstance(Constructor.java:423)
+        at com.mysql.jdbc.Util.handleNewInstance(Util.java:406)
+        at com.mysql.jdbc.ConnectionImpl.getInstance(ConnectionImpl.java:302)
+        at com.mysql.jdbc.NonRegisteringDriver.connect(NonRegisteringDriver.java:282)
+        at java.sql.DriverManager.getConnection(DriverManager.java:664)
+        at java.sql.DriverManager.getConnection(DriverManager.java:247)
+        at DockerConnectMySQL.main(DockerConnectMySQL.java:17)

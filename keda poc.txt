@@ -1,0 +1,86 @@
+Links:
+------------
+https://dzone.com/articles/autoscaling-your-kubernetes-microservice-with-keda#:~:text=%20%20%201%20First%2C%20install%20KEDA%20on,put%20some%20test%20messages%20onto%20the...%20More%20
+zira doc:
+https://cloudblogs.microsoft.com/opensource/2020/05/12/scaling-kubernetes-keda-intro-kubernetes-based-event-driven-autoscaling/
+implemented manually:
+https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale-walkthrough/
+----------------------------------------------------------------------
+
+
+
+
+
+
+
+KEDA - POC:
+----------------------
+
+krishna@Azure:~$ mkdir kedapoc
+krishna@Azure:~$ cd kedapoc
+krishna@Azure:~/kedapoc$ touch Dockerfile
+krishna@Azure:~/kedapoc$ ls
+Dockerfile
+krishna@Azure:~/kedapoc$ vi Dockerfile
+krishna@Azure:~/kedapoc$ touch Deployment.yaml
+krishna@Azure:~/kedapoc$ vi Deployment.yaml
+krishna@Azure:~/kedapoc$ kubectl apply -f https://k8s.io/examples/application/php-apache.yaml
+deployment.apps/php-apache created
+service/php-apache created
+krishna@Azure:~/kedapoc$ kubectl autoscale deployment php-apache --cpu-percent=50 --min=1 --max=10
+horizontalpodautoscaler.autoscaling/php-apache autoscaled
+krishna@Azure:~/kedapoc$ kubectl get hpa
+NAME         REFERENCE               TARGETS         MINPODS   MAXPODS   REPLICAS   AGE
+php-apache   Deployment/php-apache   <unknown>/50%   1         10        0          15s
+krishna@Azure:~/kedapoc$ kubectl get hpa
+NAME         REFERENCE               TARGETS         MINPODS   MAXPODS   REPLICAS   AGE
+php-apache   Deployment/php-apache   <unknown>/50%   1         10        1          40s
+krishna@Azure:~/kedapoc$ kubectl run -i --tty load-generator --rm --image=busybox --restart=Never -- /bin/sh -c "while sleep 0.01; do wget -q -O- http://php-apache; done"
+If you don't see a command prompt, try pressing enter.
+OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!
+OK!OK!OK!OK!OK!OK!
+OK!OK!OK!OK!OK!OK!
+OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!^[OK!OK!OK!^[OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!^ZOK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!
+OK!
+OK!
+OK!OK!OK!
+OK!OK!
+OK!OK!OK!OK!
+OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!^ZOK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!^AOK!OK!OK!OK!^[OK!OK!^[OK!^[OK!^[OK!^[OK!OK!OK!
+OK!
+OK!OK!
+OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!^ZOK!OK!OK!OK!OK!OK!^ZOK!OK!OK!OK!OK!^ZOK!OK!OK!OK!OK!^ZOK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!
+
+OK!OK!
+OK!
+OK!^[OK!^[OK!OK!^[OK!^[OK!^[OK!^[OK!OK!OK!OK!OK!OK!OK!OK!^ZOK!OK!OK!OK!^ZOK!OK!OK!OK!OK!
+OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!^ZOK!OK!OK!OK!OK!OK!OK!^ZOK!OK!OK!OK!OK!OK!^ZOK!OK!OK!OK!OK!OK!OK!OK!OK!^ZOK!OK!OK!OK!OK!OK!OK!OK!^ZOK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!^FOK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!OK!^C
+E0920 12:36:48.669361     541 v2.go:105] EOF
+
+
+krishna@Azure:~/kedapoc$ $ kubect get hpa
+NAME         REFERENCE               TARGETS   MINPODS   MAXPODS   REPLICAS   AGE
+php-apache   Deployment/php-apache   9%/50%    1         10        5          3m44s
+krishna@Azure:~/kedapoc$ kubectl get deployment php-apache
+NAME         READY   UP-TO-DATE   AVAILABLE   AGE
+php-apache   5/5     5            5           4m49s
+krishna@Azure:~/kedapoc$ ^C
+krishna@Azure:~/kedapoc$ kubectl  get hpa
+NAME         REFERENCE               TARGETS   MINPODS   MAXPODS   REPLICAS   AGE
+php-apache   Deployment/php-apache   0%/50%    1         10        5          5m12s
+krishna@Azure:~/kedapoc$ kubectl get deployment php-apache
+NAME         READY   UP-TO-DATE   AVAILABLE   AGE
+php-apache   5/5     5            5           6m2s
+krishna@Azure:~/kedapoc$ kubectl get deployment php-apache
+NAME         READY   UP-TO-DATE   AVAILABLE   AGE
+php-apache   5/5     5            5           6m19s
+krishna@Azure:~/kedapoc$ kubectl get deployment php-apache
+NAME         READY   UP-TO-DATE   AVAILABLE   AGE
+php-apache   5/5     5            5           7m
+krishna@Azure:~/kedapoc$ kubectl get deployment php-apache
+NAME         READY   UP-TO-DATE   AVAILABLE   AGE
+php-apache   5/5     5            5           8m14s
+krishna@Azure:~/kedapoc$ kubectl get deployment php-apache
+NAME         READY   UP-TO-DATE   AVAILABLE   AGE
+php-apache   1/1     1            1           10m
+krishna@Azure:~/kedapoc$
